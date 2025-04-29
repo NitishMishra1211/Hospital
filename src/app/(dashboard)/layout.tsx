@@ -39,7 +39,7 @@ const navItems = [
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
-  // Helper function to determine active state, considering base paths
+  // Helper function to determine active state, considering base paths and dynamic routes
   const isActive = (href: string) => {
     // Handle exact match for root '/'
     if (href === '/') {
@@ -47,11 +47,29 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     }
     // For other paths, check if the pathname starts with the href
     // and ensure it's not just the root path '/' starting with '/'
+    // Allows '/patient-details/p1' to activate '/patient-details' link
     return pathname.startsWith(href) && href !== '/';
   };
 
   // Find the active nav item for the header title
-  const activeNavItem = navItems.find((item) => isActive(item.href));
+  // Prioritize longer matching paths for dynamic routes
+  let activeNavItem = null;
+  let longestMatchLength = 0;
+
+  for (const item of navItems) {
+    if (pathname.startsWith(item.href) && item.href !== '/') {
+        if (item.href.length > longestMatchLength) {
+            activeNavItem = item;
+            longestMatchLength = item.href.length;
+        }
+    } else if (item.href === '/' && pathname === '/') {
+         // Handle root path explicitly if no other longer path matches
+         if (longestMatchLength === 0) {
+            activeNavItem = item;
+         }
+    }
+  }
+
   const headerTitle = activeNavItem ? activeNavItem.name : 'MediCore';
 
 

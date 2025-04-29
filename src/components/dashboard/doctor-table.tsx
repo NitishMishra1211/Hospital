@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation'; // Import useRouter
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -21,6 +22,7 @@ interface DoctorTableProps {
 }
 
 export function DoctorTable({ doctors: initialDoctors }: DoctorTableProps) {
+  const router = useRouter(); // Initialize useRouter
   const [searchTerm, setSearchTerm] = React.useState('');
   const [doctors, setDoctors] = React.useState(initialDoctors);
 
@@ -46,6 +48,11 @@ export function DoctorTable({ doctors: initialDoctors }: DoctorTableProps) {
   const handleDownloadClick = () => {
     console.log('Download clicked');
     // Implement download logic (e.g., generate CSV)
+  };
+
+  // Function to handle row click
+  const handleRowClick = (doctorId: string) => {
+    router.push(`/doctor-details/${doctorId}`);
   };
 
   return (
@@ -85,7 +92,11 @@ export function DoctorTable({ doctors: initialDoctors }: DoctorTableProps) {
           <TableBody>
             {doctors.length > 0 ? (
               doctors.map((doctor) => (
-                <TableRow key={doctor.id}>
+                <TableRow
+                  key={doctor.id}
+                  onClick={() => handleRowClick(doctor.id)} // Add onClick handler
+                  className="cursor-pointer hover:bg-muted/60" // Add cursor and hover effect
+                 >
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10">

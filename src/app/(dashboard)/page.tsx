@@ -1,50 +1,48 @@
 
-import { MetricCard } from '@/components/dashboard/metric-card';
-import { PatientTable } from '@/components/dashboard/patient-table';
-import { DoctorTable } from '@/components/dashboard/doctor-table'; // Import DoctorTable
+import { DoctorTable } from '@/components/dashboard/doctor-table';
 import { ActionCard } from '@/components/dashboard/action-card';
-import { mockPatients, mockDoctors } from '@/lib/mock-data';
-import { LayoutDashboard, Users, PhoneCall, User } from 'lucide-react';
+import { mockDoctors } from '@/lib/mock-data';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Users, Search } from 'lucide-react';
 
-export default function DashboardPage() {
+export default function HomePage() {
   return (
     <div className="space-y-6 lg:space-y-8">
-      {/* Top Statistics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <MetricCard
-          title="Total Appointments"
-          value="140"
-          icon={LayoutDashboard}
-        />
-        <MetricCard title="Total Patients" value="370" icon={Users} />
-        <MetricCard
-          title="Total Cancellations"
-          value="070"
-          icon={PhoneCall} // Using PhoneCall for cancellations
-        />
-        <MetricCard title="Avg Appts/Doctor" value="120" icon={User} /> {/* Using User for doctor average */}
-      </div>
+       {/* Welcome Section */}
+        <Card className="bg-gradient-to-r from-primary/10 to-accent/10 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold">Welcome to MediCore Hospital</CardTitle>
+            <CardDescription className="text-muted-foreground">
+              Your central hub for managing hospital operations efficiently.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {/* Optional: Add a quick search or summary here */}
+            <p className="text-sm">Use the navigation on the left to access different sections.</p>
+          </CardContent>
+        </Card>
 
-      {/* Main Content Area - Patient and Doctor Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-        {/* Left Column (Patient Table) */}
-        <div className="lg:col-span-1">
-           <h2 className="text-xl font-semibold text-muted-foreground mb-4">Recent Appointments</h2>
-          <PatientTable patients={mockPatients} />
-        </div>
 
-        {/* Right Column (Doctor Table) */}
+      {/* Main Content Area - Doctor Table */}
+      <div className="grid grid-cols-1 gap-6 lg:gap-8">
         <div className="lg:col-span-1">
-           <h2 className="text-xl font-semibold text-muted-foreground mb-4">Available Doctors</h2>
+           <h2 className="text-xl font-semibold text-muted-foreground mb-4 flex items-center gap-2">
+                <Users className="h-5 w-5"/> Our Doctors
+            </h2>
           <DoctorTable doctors={mockDoctors} />
         </div>
       </div>
 
-      {/* Bottom Feature Cards */}
+      {/* Feature/Action Cards */}
+       <h2 className="text-xl font-semibold text-muted-foreground mb-4 pt-4">Quick Actions</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
         <ActionCard title="Admit New Patient" iconName="UserPlus" />
-        <ActionCard title="Emergency Room" iconName="Ambulance" />
+        <ActionCard title="Emergency Room Status" iconName="Ambulance" />
         <ActionCard title="Pharmacy Details" iconName="FlaskConical" />
+        {/* Add more relevant home page actions if needed */}
+         <ActionCard title="Search Patient Records" iconName="Search" />
+         <ActionCard title="View Today's Schedule" iconName="CalendarDays" />
+         <ActionCard title="Hospital Announcements" iconName="Megaphone" />
       </div>
     </div>
   );

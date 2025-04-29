@@ -1,9 +1,10 @@
+
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { UserPlus, Ambulance, FlaskConical } from 'lucide-react';
+import { UserPlus, Ambulance, FlaskConical, Search, CalendarDays, Megaphone } from 'lucide-react'; // Added Search, CalendarDays, Megaphone
 import * as React from 'react';
 
 // Map icon names to actual Lucide components
@@ -11,6 +12,9 @@ const iconMap: { [key: string]: LucideIcon } = {
   UserPlus,
   Ambulance,
   FlaskConical,
+  Search,         // Added Search
+  CalendarDays,   // Added CalendarDays
+  Megaphone,      // Added Megaphone
   // Add other icons here if needed
 };
 
@@ -31,7 +35,14 @@ export function ActionCard({ title, iconName }: ActionCardProps) {
   if (!IconComponent) {
     console.error(`Icon "${iconName}" not found in iconMap.`);
     // Optionally render a default icon or null
-    return null;
+    return (
+         <Card className="shadow-md rounded-lg border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive">
+            <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4">
+                 <p className="text-lg font-semibold">{title}</p>
+                 <p className="text-sm">Error: Icon not found</p>
+            </CardContent>
+         </Card>
+    );
   }
 
   return (

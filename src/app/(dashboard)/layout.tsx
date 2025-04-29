@@ -18,7 +18,7 @@ import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import {
   Settings,
-  LayoutDashboard,
+  Home, // Changed from LayoutDashboard
   User,
   Users,
   CreditCard,
@@ -29,7 +29,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
 const navItems = [
-  { name: 'Dashboard', icon: LayoutDashboard, href: '/' },
+  { name: 'Home', icon: Home, href: '/' }, // Changed name and icon
   { name: 'Patient Details', icon: User, href: '/patient-details' },
   { name: 'Doctor Details', icon: Users, href: '/doctor-details' },
   { name: 'Payment Details', icon: CreditCard, href: '#' }, // Placeholder href
@@ -70,7 +70,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     }
   }
 
-  const headerTitle = activeNavItem ? activeNavItem.name : 'MediCore';
+  // Use "Home" as default title if no other item is active
+  const headerTitle = activeNavItem ? activeNavItem.name : 'Home';
 
 
   return (

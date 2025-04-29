@@ -39,14 +39,20 @@ const navItems = [
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
-  // Helper function to determine active state, considering '/' specifically
+  // Helper function to determine active state, considering base paths
   const isActive = (href: string) => {
+    // Handle exact match for root '/'
     if (href === '/') {
       return pathname === '/';
     }
     // For other paths, check if the pathname starts with the href
+    // and ensure it's not just the root path '/' starting with '/'
     return pathname.startsWith(href) && href !== '/';
   };
+
+  // Find the active nav item for the header title
+  const activeNavItem = navItems.find((item) => isActive(item.href));
+  const headerTitle = activeNavItem ? activeNavItem.name : 'MediCore';
 
 
   return (
@@ -66,7 +72,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <SidebarMenuItem key={item.name}>
                 <SidebarMenuButton
                   href={item.href}
-                  isActive={isActive(item.href)}
+                  isActive={isActive(item.href)} // Use updated isActive function
                 >
                   <item.icon />
                   <span>{item.name}</span>
@@ -104,9 +110,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <header className="flex items-center justify-between p-4 border-b sticky top-0 bg-background/95 backdrop-blur z-10">
           <div className="flex items-center gap-2">
             <SidebarTrigger className="md:hidden" />
-            {/* Find the current nav item to display its name as the title */}
+            {/* Display the determined header title */}
             <h1 className="text-2xl font-semibold">
-              {navItems.find((item) => isActive(item.href))?.name || 'MediCore'}
+              {headerTitle}
             </h1>
           </div>
           <div className="flex items-center gap-4">

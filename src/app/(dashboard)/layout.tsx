@@ -18,20 +18,34 @@ import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import {
   Settings,
-  Home, // Changed from LayoutDashboard
+  Home,
   User,
   Users,
   CreditCard,
   PhoneCall,
   Bell,
+  UserPlus, // Added
+  Ambulance, // Added
+  FlaskConical, // Added
+  Search, // Added
+  CalendarDays, // Added
+  Megaphone, // Added
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
 const navItems = [
-  { name: 'Home', icon: Home, href: '/' }, // Changed name and icon
+  { name: 'Home', icon: Home, href: '/' },
   { name: 'Patient Details', icon: User, href: '/patient-details' },
   { name: 'Doctor Details', icon: Users, href: '/doctor-details' },
+  // Quick Action Links (can be separate or integrated)
+  { name: 'Admit Patient', icon: UserPlus, href: '/admit-patient' },
+  { name: 'ER Status', icon: Ambulance, href: '/emergency-status' },
+  { name: 'Pharmacy', icon: FlaskConical, href: '/pharmacy-details' },
+  { name: 'Search Patients', icon: Search, href: '/search-patients' },
+  { name: 'Schedule', icon: CalendarDays, href: '/todays-schedule' },
+  { name: 'Announcements', icon: Megaphone, href: '/announcements' },
+  // Other links
   { name: 'Payment Details', icon: CreditCard, href: '#' }, // Placeholder href
   { name: 'E-Channeling', icon: PhoneCall, href: '#' }, // Placeholder href
 ];
@@ -45,30 +59,47 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     if (href === '/') {
       return pathname === '/';
     }
-    // For other paths, check if the pathname starts with the href
-    // and ensure it's not just the root path '/' starting with '/'
-    // Allows '/patient-details/p1' to activate '/patient-details' link
-    return pathname.startsWith(href) && href !== '/';
+    // Check if the current pathname starts with the href for nested routes
+    // Ensure it's not just a partial match (e.g., '/' matching '/doctors')
+    if (href !== '/' && pathname.startsWith(href)) {
+      // Check if the next character after the href part is '/' or end of string
+      const nextChar = pathname[href.length];
+      return nextChar === '/' || nextChar === undefined;
+    }
+    return false;
   };
+
 
   // Find the active nav item for the header title
   // Prioritize longer matching paths for dynamic routes
-  let activeNavItem = null;
-  let longestMatchLength = 0;
+   let activeNavItem = null;
+   let longestMatchLength = 0;
 
-  for (const item of navItems) {
-    if (pathname.startsWith(item.href) && item.href !== '/') {
-        if (item.href.length > longestMatchLength) {
+    // First pass: Exact match or root
+    for (const item of navItems) {
+        if (pathname === item.href) {
             activeNavItem = item;
             longestMatchLength = item.href.length;
+            break; // Exact match found, prioritize this
         }
-    } else if (item.href === '/' && pathname === '/') {
-         // Handle root path explicitly if no other longer path matches
-         if (longestMatchLength === 0) {
-            activeNavItem = item;
-         }
     }
-  }
+
+    // Second pass: StartsWith match (if no exact match found)
+    if (!activeNavItem) {
+        for (const item of navItems) {
+            if (item.href !== '/' && pathname.startsWith(item.href)) {
+                 const nextChar = pathname[item.href.length];
+                 // Ensure it's a true sub-path or exact match start
+                 if (nextChar === '/' || nextChar === undefined) {
+                    if (item.href.length > longestMatchLength) {
+                        activeNavItem = item;
+                        longestMatchLength = item.href.length;
+                    }
+                 }
+            }
+        }
+    }
+
 
   // Use "Home" as default title if no other item is active
   const headerTitle = activeNavItem ? activeNavItem.name : 'Home';

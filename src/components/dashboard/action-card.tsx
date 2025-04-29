@@ -1,6 +1,8 @@
 
 'use client';
 
+import type { ReactNode } from 'react';
+import Link from 'next/link'; // Import Link
 import { Card, CardContent } from "@/components/ui/card";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,16 +23,11 @@ const iconMap: { [key: string]: LucideIcon } = {
 interface ActionCardProps {
   title: string;
   iconName: keyof typeof iconMap; // Accept icon name as a string
+  href: string; // Add href for navigation
 }
 
-export function ActionCard({ title, iconName }: ActionCardProps) {
+export function ActionCard({ title, iconName, href }: ActionCardProps) {
   const IconComponent = iconMap[iconName];
-
-  const handleClick = () => {
-    // Placeholder for client-side action, e.g., navigation or opening a modal
-    console.log(`${title} card clicked (handled client-side)`);
-    // Example: router.push('/admit-patient'); or setModalOpen(true);
-  };
 
   if (!IconComponent) {
     console.error(`Icon "${iconName}" not found in iconMap.`);
@@ -45,20 +42,29 @@ export function ActionCard({ title, iconName }: ActionCardProps) {
     );
   }
 
+  const cardContent = (
+     <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4">
+      <div className="p-3 rounded-full bg-primary/20 text-primary">
+        <IconComponent className="h-8 w-8 " />
+      </div>
+      <p className="text-lg font-semibold">{title}</p>
+      <Button variant="link" size="sm" className="text-primary hover:text-primary/80 pointer-events-none">
+        Proceed
+      </Button>
+    </CardContent>
+  );
+
   return (
-    <Card
-      className="shadow-md rounded-lg hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-primary/10 to-accent/10"
-      onClick={handleClick} // Use internal handler or wrap with Link/DialogTrigger
-    >
-       <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4">
-        <div className="p-3 rounded-full bg-primary/20 text-primary">
-          <IconComponent className="h-8 w-8 " />
-        </div>
-        <p className="text-lg font-semibold">{title}</p>
-        <Button variant="link" size="sm" className="text-primary hover:text-primary/80 pointer-events-none">
-          Proceed
-        </Button>
-      </CardContent>
-    </Card>
+    <Link href={href} passHref legacyBehavior>
+      <a className="block group"> {/* Use anchor tag for legacyBehavior */}
+        <Card
+          className="shadow-md rounded-lg hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-primary/10 to-accent/10 h-full group-hover:ring-2 group-hover:ring-primary/50"
+          role="button" // Add role for accessibility
+          tabIndex={0} // Make it focusable
+        >
+          {cardContent}
+        </Card>
+      </a>
+    </Link>
   );
 }

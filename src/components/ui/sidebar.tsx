@@ -1,6 +1,8 @@
+
 "use client"
 
 import * as React from "react"
+import Link from "next/link" // Import Link
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"
@@ -533,13 +535,17 @@ const sidebarMenuButtonVariants = cva(
   }
 )
 
-const SidebarMenuButton = React.forwardRef<
-  HTMLButtonElement,
-  React.ComponentProps<"button"> & {
+type SidebarMenuButtonProps = (React.ComponentProps<"button"> | React.ComponentProps<typeof Link>) & {
     asChild?: boolean
     isActive?: boolean
     tooltip?: string | React.ComponentProps<typeof TooltipContent>
+    href?: string // Add href prop
   } & VariantProps<typeof sidebarMenuButtonVariants>
+
+
+const SidebarMenuButton = React.forwardRef<
+  HTMLButtonElement & HTMLAnchorElement, // Allow ref for both button and anchor
+  SidebarMenuButtonProps
 >(
   (
     {
@@ -549,23 +555,28 @@ const SidebarMenuButton = React.forwardRef<
       size = "default",
       tooltip,
       className,
+      href, // Destructure href
       ...props
     },
     ref
   ) => {
-    const Comp = asChild ? Slot : "button"
     const { isMobile, state } = useSidebar()
 
-    const button = (
-      <Comp
-        ref={ref}
-        data-sidebar="menu-button"
-        data-size={size}
-        data-active={isActive}
-        className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
-        {...props}
-      />
-    )
+    // Determine the component to render: Link if href is provided, otherwise button or Slot
+    const Comp = href ? Link : asChild ? Slot : "button"
+
+    // Props for the component
+    const compProps = {
+      ref: ref as any, // Cast ref to any to handle both button and anchor refs
+      "data-sidebar": "menu-button",
+      "data-size": size,
+      "data-active": isActive,
+      className: cn(sidebarMenuButtonVariants({ variant, size }), className),
+      ...(href ? { href } : {}), // Pass href to Link
+      ...props,
+    }
+
+    const button = React.createElement(Comp, compProps)
 
     if (!tooltip) {
       return button
@@ -705,33 +716,37 @@ const SidebarMenuSubItem = React.forwardRef<
 >(({ ...props }, ref) => <li ref={ref} {...props} />)
 SidebarMenuSubItem.displayName = "SidebarMenuSubItem"
 
-const SidebarMenuSubButton = React.forwardRef<
-  HTMLAnchorElement,
-  React.ComponentProps<"a"> & {
+type SidebarMenuSubButtonProps = (React.ComponentProps<"a"> | React.ComponentProps<typeof Link>) & {
     asChild?: boolean
     size?: "sm" | "md"
     isActive?: boolean
+    href?: string // Add href prop
   }
->(({ asChild = false, size = "md", isActive, className, ...props }, ref) => {
-  const Comp = asChild ? Slot : "a"
 
-  return (
-    <Comp
-      ref={ref}
-      data-sidebar="menu-sub-button"
-      data-size={size}
-      data-active={isActive}
-      className={cn(
-        "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground outline-none ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-accent-foreground",
-        "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground",
-        size === "sm" && "text-xs",
-        size === "md" && "text-sm",
-        "group-data-[collapsible=icon]:hidden",
-        className
-      )}
-      {...props}
-    />
-  )
+const SidebarMenuSubButton = React.forwardRef<
+  HTMLAnchorElement,
+  SidebarMenuSubButtonProps
+>(({ asChild = false, size = "md", isActive, className, href, ...props }, ref) => {
+  const Comp = href ? Link : asChild ? Slot : "a"
+
+  const compProps = {
+    ref: ref,
+    "data-sidebar": "menu-sub-button",
+    "data-size": size,
+    "data-active": isActive,
+    className: cn(
+      "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground outline-none ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-accent-foreground",
+      "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground",
+      size === "sm" && "text-xs",
+      size === "md" && "text-sm",
+      "group-data-[collapsible=icon]:hidden",
+      className
+    ),
+    ...(href ? { href } : {}), // Pass href to Link
+    ...props,
+  };
+
+  return React.createElement(Comp, compProps);
 })
 SidebarMenuSubButton.displayName = "SidebarMenuSubButton"
 

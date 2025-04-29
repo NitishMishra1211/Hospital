@@ -1,11 +1,13 @@
 
-import { DoctorTable } from '@/components/dashboard/doctor-table';
+import { DoctorGrid } from '@/components/dashboard/doctor-grid'; // Import the new DoctorGrid
 import { ActionCard } from '@/components/dashboard/action-card';
 import { mockDoctors } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Users, Search } from 'lucide-react';
+import { Users } from 'lucide-react'; // Keep Users icon
 
 export default function HomePage() {
+  const totalDoctors = mockDoctors.length;
+
   return (
     <div className="space-y-6 lg:space-y-8">
        {/* Welcome Section */}
@@ -17,20 +19,20 @@ export default function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Optional: Add a quick search or summary here */}
             <p className="text-sm">Use the navigation on the left to access different sections.</p>
           </CardContent>
         </Card>
 
 
-      {/* Main Content Area - Doctor Table */}
-      <div className="grid grid-cols-1 gap-6 lg:gap-8">
-        <div className="lg:col-span-1">
-           <h2 className="text-xl font-semibold text-muted-foreground mb-4 flex items-center gap-2">
+      {/* Doctor Grid Section */}
+      <div className="space-y-4">
+         <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold text-muted-foreground flex items-center gap-2">
                 <Users className="h-5 w-5"/> Our Doctors
             </h2>
-          <DoctorTable doctors={mockDoctors} />
-        </div>
+             <p className="text-sm font-medium text-muted-foreground">Total Doctors: {totalDoctors}</p>
+         </div>
+        <DoctorGrid doctors={mockDoctors} />
       </div>
 
       {/* Feature/Action Cards */}
@@ -39,10 +41,9 @@ export default function HomePage() {
         <ActionCard title="Admit New Patient" iconName="UserPlus" />
         <ActionCard title="Emergency Room Status" iconName="Ambulance" />
         <ActionCard title="Pharmacy Details" iconName="FlaskConical" />
-        {/* Add more relevant home page actions if needed */}
-         <ActionCard title="Search Patient Records" iconName="Search" />
-         <ActionCard title="View Today's Schedule" iconName="CalendarDays" />
-         <ActionCard title="Hospital Announcements" iconName="Megaphone" />
+        <ActionCard title="Search Patient Records" iconName="Search" />
+        <ActionCard title="View Today's Schedule" iconName="CalendarDays" />
+        <ActionCard title="Hospital Announcements" iconName="Megaphone" />
       </div>
     </div>
   );

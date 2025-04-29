@@ -1,9 +1,12 @@
 
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Ambulance, Clock, Users, BedDouble, Phone, UserCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button'; // Import Button component
 
 
 // Mock data for demonstration

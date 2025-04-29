@@ -24,12 +24,12 @@ import {
   CreditCard,
   PhoneCall,
   Bell,
-  UserPlus, // Added
-  Ambulance, // Added
-  FlaskConical, // Added
-  Search, // Added
-  CalendarDays, // Added
-  Megaphone, // Added
+  UserPlus,
+  Ambulance,
+  FlaskConical,
+  Search,
+  CalendarDays,
+  Megaphone,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -45,9 +45,9 @@ const navItems = [
   { name: 'Search Patients', icon: Search, href: '/search-patients' },
   { name: 'Schedule', icon: CalendarDays, href: '/todays-schedule' },
   { name: 'Announcements', icon: Megaphone, href: '/announcements' },
-  // Other links
-  { name: 'Payment Details', icon: CreditCard, href: '#' }, // Placeholder href
-  { name: 'E-Channeling', icon: PhoneCall, href: '#' }, // Placeholder href
+  // Other links - Updated hrefs
+  { name: 'Payment Details', icon: CreditCard, href: '/payment-details' },
+  { name: 'E-Channeling', icon: PhoneCall, href: '/e-channeling' },
 ];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {

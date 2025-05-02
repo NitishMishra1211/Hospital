@@ -3,6 +3,7 @@
 
 import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link'; // <-- Import Link
 import {
   SidebarProvider,
   Sidebar,
@@ -38,16 +39,15 @@ const navItems = [
   { name: 'Home', icon: Home, href: '/' },
   { name: 'Patient Details', icon: User, href: '/patient-details' },
   { name: 'Doctor Details', icon: Users, href: '/doctor-details' },
-  // Quick Action Links (can be separate or integrated)
   { name: 'Admit Patient', icon: UserPlus, href: '/admit-patient' },
   { name: 'ER Status', icon: Ambulance, href: '/emergency-status' },
   { name: 'Pharmacy', icon: FlaskConical, href: '/pharmacy-details' },
   { name: 'Search Patients', icon: Search, href: '/search-patients' },
   { name: 'Schedule', icon: CalendarDays, href: '/todays-schedule' },
   { name: 'Announcements', icon: Megaphone, href: '/announcements' },
-  // Other links - Updated hrefs
   { name: 'Payment Details', icon: CreditCard, href: '/payment-details' },
   { name: 'E-Channeling', icon: PhoneCall, href: '/e-channeling' },
+  { name: 'Settings', icon: Settings, href: '/settings' }, // Added Settings link
 ];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -150,8 +150,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               variant="ghost"
               size="icon"
               className="ml-auto text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              asChild // Use asChild to make it a link if needed
             >
-              <Settings className="h-5 w-5" />
+              <Link href="/settings">
+                <Settings className="h-5 w-5" />
+              </Link>
             </Button>
           </div>
         </SidebarHeader>
@@ -189,3 +192,4 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     </SidebarProvider>
   );
 }
+

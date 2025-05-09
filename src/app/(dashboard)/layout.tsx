@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { ReactNode } from 'react';
@@ -137,6 +136,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <AvatarImage
                 src="https://picsum.photos/seed/admin/40/40"
                 alt="Admin User"
+                data-ai-hint="profile avatar"
               />
               <AvatarFallback>AU</AvatarFallback>
             </Avatar>
@@ -182,6 +182,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <AvatarImage
                 src="https://picsum.photos/seed/admin/40/40"
                 alt="Admin User"
+                data-ai-hint="profile avatar"
               />
               <AvatarFallback>AU</AvatarFallback>
             </Avatar>
@@ -192,4 +193,3 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     </SidebarProvider>
   );
 }
-

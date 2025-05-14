@@ -9,18 +9,62 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Settings, UserCircle, Lock, Palette, Bell, Phone } from 'lucide-react'; // Added Phone
+import { Settings, UserCircle, Lock, Palette, Bell, Phone } from 'lucide-react'; 
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { mockCountryCodes, CountryCode } from '@/lib/mock-data'; // Import country codes
 
 // Mock user data (in a real app, this would come from auth state/API)
 const currentUser = {
   name: 'Admin User',
   email: 'admin@medicore.com',
-  avatarUrl: 'https://picsum.photos/seed/admin/80/80', // Larger avatar for settings
-  phone: '+15551234567', // Example phone with country code
+  avatarUrl: 'https://picsum.photos/seed/admin/80/80', 
+  phone: '+15551234567', 
   role: 'Administrator',
 };
+
+// Helper to extract country code and local number
+const extractPhoneParts = (fullPhoneNumber: string | undefined): { countryCode: string, localNumber: string } => {
+    if (!fullPhoneNumber) return { countryCode: '+1', localNumber: '' }; // Default to US
+
+    const foundCountry = mockCountryCodes.find(cc => fullPhoneNumber.startsWith(cc.dial_code));
+    if (foundCountry) {
+        return {
+            countryCode: foundCountry.dial_code,
+            localNumber: fullPhoneNumber.substring(foundCountry.dial_code.length).replace(/[^0-9]/g, ''),
+        };
+    }
+    // If no match, assume it might be a local number or a country not in our short list
+    // For simplicity, default to US if no country code is apparent or recognized
+    const numericOnly = fullPhoneNumber.replace(/[^0-9]/g, '');
+    if (fullPhoneNumber.startsWith('+')) { // It has some country code we don't recognize
+         // Try to find the longest matching dial code
+        let bestMatch = { countryCode: '+1', localNumber: numericOnly.startsWith('1') ? numericOnly.substring(1) : numericOnly };
+        let longestDialCode = 0;
+
+        mockCountryCodes.forEach(cc => {
+            if (fullPhoneNumber.startsWith(cc.dial_code) && cc.dial_code.length > longestDialCode) {
+                longestDialCode = cc.dial_code.length;
+                bestMatch = {
+                    countryCode: cc.dial_code,
+                    localNumber: fullPhoneNumber.substring(cc.dial_code.length).replace(/[^0-9]/g, '')
+                };
+            }
+        });
+         if(longestDialCode > 0) return bestMatch;
+
+        // Fallback if still no recognized prefix
+        const firstChar = fullPhoneNumber.charAt(0);
+        if (firstChar === '+' && numericOnly.length > 10) { // Basic check for common international format
+            return { countryCode: fullPhoneNumber.substring(0, fullPhoneNumber.length - 10), localNumber: numericOnly.substring(numericOnly.length -10) };
+        }
+
+    }
+
+
+    return { countryCode: '+1', localNumber: numericOnly }; // Default assumption
+};
+
 
 export default function SettingsPage() {
     const { toast } = useToast();
@@ -29,13 +73,23 @@ export default function SettingsPage() {
     const [confirmPassword, setConfirmPassword] = React.useState('');
 
     // State for preferences (example)
-    const [theme, setTheme] = React.useState('system'); // 'light', 'dark', 'system'
+    const [theme, setTheme] = React.useState('system'); 
     const [emailNotifications, setEmailNotifications] = React.useState(true);
     const [smsNotifications, setSmsNotifications] = React.useState(false);
 
-    // State for OTP
-    const [profilePhoneNumber, setProfilePhoneNumber] = React.useState(currentUser.phone || '');
-    const [contactVerificationPhoneNumber, setContactVerificationPhoneNumber] = React.useState(currentUser.phone || '');
+    // Initial phone parts extraction
+    const initialProfilePhoneParts = extractPhoneParts(currentUser.phone);
+    const initialOtpPhoneParts = extractPhoneParts(currentUser.phone);
+
+
+    // State for profile phone
+    const [profileCountryCode, setProfileCountryCode] = React.useState(initialProfilePhoneParts.countryCode);
+    const [profileLocalPhoneNumber, setProfileLocalPhoneNumber] = React.useState(initialProfilePhoneParts.localNumber);
+    
+    // State for OTP phone
+    const [otpCountryCode, setOtpCountryCode] = React.useState(initialOtpPhoneParts.countryCode);
+    const [otpLocalPhoneNumber, setOtpLocalPhoneNumber] = React.useState(initialOtpPhoneParts.localNumber);
+
     const [otpSent, setOtpSent] = React.useState(false);
     const [otp, setOtp] = React.useState('');
     const [isSendingOtp, setIsSendingOtp] = React.useState(false);
@@ -44,12 +98,11 @@ export default function SettingsPage() {
 
     const handleProfileUpdate = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        // Simulate profile update
+        const fullProfilePhoneNumber = `${profileCountryCode}${profileLocalPhoneNumber}`;
         toast({
             title: "Profile Updated",
-            description: "Your profile information has been saved (simulation).",
+            description: `Your profile information (phone: ${fullProfilePhoneNumber}) has been saved (simulation).`,
         });
-        // In a real app, you'd also update currentUser.phone if profilePhoneNumber changes
     };
 
     const handlePasswordChange = (event: React.FormEvent<HTMLFormElement>) => {
@@ -70,12 +123,10 @@ export default function SettingsPage() {
             });
             return;
         }
-        // Simulate password change
          toast({
             title: "Password Changed",
             description: "Your password has been updated successfully (simulation).",
         });
-        // Clear password fields
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
@@ -83,7 +134,6 @@ export default function SettingsPage() {
 
      const handlePreferencesUpdate = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        // Simulate preferences update
         toast({
             title: "Preferences Saved",
             description: "Your preferences have been updated (simulation).",
@@ -91,7 +141,8 @@ export default function SettingsPage() {
     };
 
     const handleSendOtp = async () => {
-        if (!contactVerificationPhoneNumber.trim()) {
+        const fullOtpPhoneNumber = `${otpCountryCode}${otpLocalPhoneNumber}`;
+        if (!fullOtpPhoneNumber.replace(otpCountryCode, '').trim()) { // Check if local part is empty
             toast({
                 variant: "destructive",
                 title: "Phone Number Required",
@@ -104,7 +155,7 @@ export default function SettingsPage() {
             const response = await fetch('/api/send-otp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phoneNumber: contactVerificationPhoneNumber }),
+                body: JSON.stringify({ phoneNumber: fullOtpPhoneNumber }),
             });
             const data = await response.json();
 
@@ -145,22 +196,17 @@ export default function SettingsPage() {
             return;
         }
         setIsVerifyingOtp(true);
-        // --- Simulate OTP Verification ---
-        // In a real app, you'd send the OTP and phone number to a /api/verify-otp endpoint.
-        // This endpoint would check against the OTP stored server-side (e.g., in Redis or a database).
-        console.log(`Simulating verification of OTP ${otp} for phone number ${contactVerificationPhoneNumber}`);
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+        const fullOtpPhoneNumber = `${otpCountryCode}${otpLocalPhoneNumber}`;
+        console.log(`Simulating verification of OTP ${otp} for phone number ${fullOtpPhoneNumber}`);
+        await new Promise(resolve => setTimeout(resolve, 1000)); 
 
-        // For this simulation, let's assume any 6-digit OTP starting with '1' is valid.
-        if (otp.length === 6 && /^\d+$/.test(otp) && otp.startsWith('1')) { // Example: OTP '123456' will pass
+        if (otp.length === 6 && /^\d+$/.test(otp) && otp.startsWith('1')) { 
             toast({
                 title: "Phone Verified (Simulated)",
                 description: "Your phone number has been successfully verified.",
             });
-            setOtpSent(false); // Reset OTP UI
+            setOtpSent(false); 
             setOtp('');
-            // In a real app: Update user profile on the backend to mark phone as verified.
-            // Potentially currentUser.phoneVerified = true; and trigger profile save.
         } else {
             toast({
                 variant: "destructive",
@@ -209,7 +255,21 @@ export default function SettingsPage() {
                  </div>
                  <div className="space-y-2">
                     <Label htmlFor="profilePhone">Phone Number (Profile)</Label>
-                    <Input id="profilePhone" type="tel" value={profilePhoneNumber} onChange={(e) => setProfilePhoneNumber(e.target.value)} placeholder="e.g., +11234567890"/>
+                    <div className="flex gap-2">
+                        <Select value={profileCountryCode} onValueChange={setProfileCountryCode}>
+                            <SelectTrigger className="w-[120px]">
+                                <SelectValue placeholder="Country" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {mockCountryCodes.map(cc => (
+                                    <SelectItem key={`prof-${cc.code}`} value={cc.dial_code}>
+                                        {cc.dial_code} ({cc.code})
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Input id="profileLocalPhone" type="tel" value={profileLocalPhoneNumber} onChange={(e) => setProfileLocalPhoneNumber(e.target.value.replace(/[^0-9]/g, ''))} placeholder="e.g., 1234567890"/>
+                    </div>
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="profileRole">Role</Label>
@@ -237,22 +297,35 @@ export default function SettingsPage() {
         <CardContent className="p-6">
            <div className="space-y-4">
                 <div className="space-y-2">
-                    <Label htmlFor="contactVerificationPhoneNumber">Phone Number (for OTP)</Label>
+                    <Label htmlFor="otpLocalPhoneNumber">Phone Number (for OTP)</Label>
                     <div className="flex gap-2 items-start">
+                         <Select value={otpCountryCode} onValueChange={setOtpCountryCode} disabled={otpSent || isSendingOtp}>
+                            <SelectTrigger className="w-[120px]">
+                                <SelectValue placeholder="Country" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {mockCountryCodes.map(cc => (
+                                    <SelectItem key={`otp-${cc.code}`} value={cc.dial_code}>
+                                        {cc.dial_code} ({cc.code})
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                         <Input
-                            id="contactVerificationPhoneNumber"
+                            id="otpLocalPhoneNumber"
                             type="tel"
-                            placeholder="e.g., +11234567890"
-                            value={contactVerificationPhoneNumber}
-                            onChange={(e) => setContactVerificationPhoneNumber(e.target.value)}
+                            placeholder="e.g., 1234567890"
+                            value={otpLocalPhoneNumber}
+                            onChange={(e) => setOtpLocalPhoneNumber(e.target.value.replace(/[^0-9]/g, ''))}
                             disabled={otpSent || isSendingOtp}
+                            className="flex-1"
                         />
-                        <Button onClick={handleSendOtp} disabled={isSendingOtp || !contactVerificationPhoneNumber.trim()} className="whitespace-nowrap">
+                        <Button onClick={handleSendOtp} disabled={isSendingOtp || !otpLocalPhoneNumber.trim()} className="whitespace-nowrap">
                             {isSendingOtp ? "Sending..." : otpSent ? "Resend OTP" : "Send OTP"}
                         </Button>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                        Use E.164 format (e.g., +11234567890). We'll send an OTP to this number for verification.
+                        We'll send an OTP to this number for verification.
                     </p>
                 </div>
 
@@ -381,3 +454,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+

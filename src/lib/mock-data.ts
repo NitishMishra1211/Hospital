@@ -1,3 +1,4 @@
+
 export type Patient = {
   id: string;
   name: string;
@@ -15,6 +16,12 @@ export type Doctor = {
   name: string;
   avatarUrl: string;
   specialization: string;
+};
+
+export type CountryCode = {
+  code: string;
+  name: string;
+  dial_code: string;
 };
 
 export const mockPatients: Patient[] = [
@@ -106,4 +113,14 @@ export const mockDoctors: Doctor[] = [
     avatarUrl: 'https://picsum.photos/seed/drtaylor/40/40',
     specialization: 'Dermatology',
   },
+];
+
+export const mockCountryCodes: CountryCode[] = [
+  { name: 'United States', code: 'US', dial_code: '+1' },
+  { name: 'Canada', code: 'CA', dial_code: '+1' },
+  { name: 'United Kingdom', code: 'GB', dial_code: '+44' },
+  { name: 'India', code: 'IN', dial_code: '+91' },
+  { name: 'Australia', code: 'AU', dial_code: '+61' },
+  { name: 'Germany', code: 'DE', dial_code: '+49' },
+  // Add more countries as needed
 ];

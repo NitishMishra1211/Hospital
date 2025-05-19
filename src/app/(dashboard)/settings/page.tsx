@@ -9,60 +9,63 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Settings, UserCircle, Lock, Palette, Bell, Phone } from 'lucide-react'; 
+import { Settings, UserCircle, Lock, Palette, Bell, Phone } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { mockCountryCodes, CountryCode } from '@/lib/mock-data'; // Import country codes
+import { mockCountryCodes, CountryCode } from '@/lib/mock-data';
 
-// Mock user data (in a real app, this would come from auth state/API)
 const currentUser = {
   name: 'Admin User',
   email: 'admin@medicore.com',
-  avatarUrl: 'https://picsum.photos/seed/admin/80/80', 
-  phone: '+15551234567', 
+  avatarUrl: 'https://picsum.photos/seed/admin/80/80',
+  phone: '+15551234567',
   role: 'Administrator',
 };
 
-// Helper to extract country code and local number
-const extractPhoneParts = (fullPhoneNumber: string | undefined): { countryCode: string, localNumber: string } => {
-    if (!fullPhoneNumber) return { countryCode: '+1', localNumber: '' }; // Default to US
+const extractPhoneParts = (fullPhoneNumber: string | undefined): { countryCodeKey: string, localNumber: string } => {
+    const defaultCountry = mockCountryCodes.find(c => c.code === 'US') || mockCountryCodes[0]; // Default to US or first in list
 
-    const foundCountry = mockCountryCodes.find(cc => fullPhoneNumber.startsWith(cc.dial_code));
-    if (foundCountry) {
-        return {
-            countryCode: foundCountry.dial_code,
-            localNumber: fullPhoneNumber.substring(foundCountry.dial_code.length).replace(/[^0-9]/g, ''),
-        };
+    if (!fullPhoneNumber) {
+        return { countryCodeKey: defaultCountry.code, localNumber: '' };
     }
-    // If no match, assume it might be a local number or a country not in our short list
-    // For simplicity, default to US if no country code is apparent or recognized
-    const numericOnly = fullPhoneNumber.replace(/[^0-9]/g, '');
-    if (fullPhoneNumber.startsWith('+')) { // It has some country code we don't recognize
-         // Try to find the longest matching dial code
-        let bestMatch = { countryCode: '+1', localNumber: numericOnly.startsWith('1') ? numericOnly.substring(1) : numericOnly };
-        let longestDialCode = 0;
 
-        mockCountryCodes.forEach(cc => {
-            if (fullPhoneNumber.startsWith(cc.dial_code) && cc.dial_code.length > longestDialCode) {
-                longestDialCode = cc.dial_code.length;
-                bestMatch = {
-                    countryCode: cc.dial_code,
-                    localNumber: fullPhoneNumber.substring(cc.dial_code.length).replace(/[^0-9]/g, '')
-                };
+    let matchedCountry = defaultCountry;
+    let localNumber = '';
+    let longestMatchLength = 0;
+
+    for (const cc of mockCountryCodes) {
+        if (fullPhoneNumber.startsWith(cc.dial_code)) {
+            // Check if this match is longer, or if it's the same length but a more specific one (e.g. US for +1)
+            if (cc.dial_code.length > longestMatchLength) {
+                longestMatchLength = cc.dial_code.length;
+                matchedCountry = cc;
+                localNumber = fullPhoneNumber.substring(cc.dial_code.length).replace(/[^0-9]/g, '');
+            } else if (cc.dial_code.length === longestMatchLength && cc.code === 'US' && matchedCountry.dial_code === '+1' && matchedCountry.code !== 'US') {
+                // Prioritize US for ambiguous +1 if current best match for +1 is not US
+                matchedCountry = cc;
+                localNumber = fullPhoneNumber.substring(cc.dial_code.length).replace(/[^0-9]/g, '');
+            } else if (cc.dial_code.length === longestMatchLength && matchedCountry.dial_code !== '+1' && cc.dial_code === '+1' ) {
+                 // If current best match is not +1, but this one is +1 (and same length), consider it.
+                 // This case is less likely to be an improvement unless we have very specific rules.
+                 // For now, sticking with the first longest match or US for +1.
             }
-        });
-         if(longestDialCode > 0) return bestMatch;
-
-        // Fallback if still no recognized prefix
-        const firstChar = fullPhoneNumber.charAt(0);
-        if (firstChar === '+' && numericOnly.length > 10) { // Basic check for common international format
-            return { countryCode: fullPhoneNumber.substring(0, fullPhoneNumber.length - 10), localNumber: numericOnly.substring(numericOnly.length -10) };
         }
-
+    }
+    
+    // If no dial_code prefix was found (longestMatchLength is still 0), use default and try to clean localNumber
+    if (longestMatchLength === 0) {
+        const numericPhone = fullPhoneNumber.replace(/[^0-9]/g, '');
+        const numericDefaultDialCode = defaultCountry.dial_code.replace('+', '');
+        if (numericPhone.startsWith(numericDefaultDialCode) && numericPhone.length > numericDefaultDialCode.length) {
+            localNumber = numericPhone.substring(numericDefaultDialCode.length);
+        } else {
+            localNumber = numericPhone; // Assign whatever numbers are left
+        }
+        // matchedCountry is already defaultCountry
     }
 
 
-    return { countryCode: '+1', localNumber: numericOnly }; // Default assumption
+    return { countryCodeKey: matchedCountry.code, localNumber };
 };
 
 
@@ -72,22 +75,16 @@ export default function SettingsPage() {
     const [newPassword, setNewPassword] = React.useState('');
     const [confirmPassword, setConfirmPassword] = React.useState('');
 
-    // State for preferences (example)
-    const [theme, setTheme] = React.useState('system'); 
+    const [theme, setTheme] = React.useState('system');
     const [emailNotifications, setEmailNotifications] = React.useState(true);
     const [smsNotifications, setSmsNotifications] = React.useState(false);
 
-    // Initial phone parts extraction
     const initialProfilePhoneParts = extractPhoneParts(currentUser.phone);
-    const initialOtpPhoneParts = extractPhoneParts(currentUser.phone);
-
-
-    // State for profile phone
-    const [profileCountryCode, setProfileCountryCode] = React.useState(initialProfilePhoneParts.countryCode);
+    const [profileSelectedCountryCode, setProfileSelectedCountryCode] = React.useState(initialProfilePhoneParts.countryCodeKey);
     const [profileLocalPhoneNumber, setProfileLocalPhoneNumber] = React.useState(initialProfilePhoneParts.localNumber);
-    
-    // State for OTP phone
-    const [otpCountryCode, setOtpCountryCode] = React.useState(initialOtpPhoneParts.countryCode);
+
+    const initialOtpPhoneParts = extractPhoneParts(currentUser.phone); // Can be different if user has a different OTP number
+    const [otpSelectedCountryCode, setOtpSelectedCountryCode] = React.useState(initialOtpPhoneParts.countryCodeKey);
     const [otpLocalPhoneNumber, setOtpLocalPhoneNumber] = React.useState(initialOtpPhoneParts.localNumber);
 
     const [otpSent, setOtpSent] = React.useState(false);
@@ -98,7 +95,9 @@ export default function SettingsPage() {
 
     const handleProfileUpdate = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        const fullProfilePhoneNumber = `${profileCountryCode}${profileLocalPhoneNumber}`;
+        const selectedCountry = mockCountryCodes.find(c => c.code === profileSelectedCountryCode);
+        const dialCode = selectedCountry ? selectedCountry.dial_code : '';
+        const fullProfilePhoneNumber = `${dialCode}${profileLocalPhoneNumber}`;
         toast({
             title: "Profile Updated",
             description: `Your profile information (phone: ${fullProfilePhoneNumber}) has been saved (simulation).`,
@@ -141,8 +140,11 @@ export default function SettingsPage() {
     };
 
     const handleSendOtp = async () => {
-        const fullOtpPhoneNumber = `${otpCountryCode}${otpLocalPhoneNumber}`;
-        if (!fullOtpPhoneNumber.replace(otpCountryCode, '').trim()) { // Check if local part is empty
+        const selectedOtpCountry = mockCountryCodes.find(c => c.code === otpSelectedCountryCode);
+        const dialCode = selectedOtpCountry ? selectedOtpCountry.dial_code : '';
+        const fullOtpPhoneNumber = `${dialCode}${otpLocalPhoneNumber}`;
+
+        if (!otpLocalPhoneNumber.trim()) {
             toast({
                 variant: "destructive",
                 title: "Phone Number Required",
@@ -196,16 +198,18 @@ export default function SettingsPage() {
             return;
         }
         setIsVerifyingOtp(true);
-        const fullOtpPhoneNumber = `${otpCountryCode}${otpLocalPhoneNumber}`;
+        const selectedOtpCountry = mockCountryCodes.find(c => c.code === otpSelectedCountryCode);
+        const dialCode = selectedOtpCountry ? selectedOtpCountry.dial_code : '';
+        const fullOtpPhoneNumber = `${dialCode}${otpLocalPhoneNumber}`;
         console.log(`Simulating verification of OTP ${otp} for phone number ${fullOtpPhoneNumber}`);
-        await new Promise(resolve => setTimeout(resolve, 1000)); 
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-        if (otp.length === 6 && /^\d+$/.test(otp) && otp.startsWith('1')) { 
+        if (otp.length === 6 && /^\d+$/.test(otp) && otp.startsWith('1')) {
             toast({
                 title: "Phone Verified (Simulated)",
                 description: "Your phone number has been successfully verified.",
             });
-            setOtpSent(false); 
+            setOtpSent(false);
             setOtp('');
         } else {
             toast({
@@ -225,7 +229,6 @@ export default function SettingsPage() {
         <h1 className="text-2xl font-bold">User Settings</h1>
       </div>
 
-      {/* Profile Information Section */}
       <Card className="shadow-lg rounded-lg">
         <CardHeader className="bg-primary/10">
            <div className="flex items-center gap-3">
@@ -256,13 +259,13 @@ export default function SettingsPage() {
                  <div className="space-y-2">
                     <Label htmlFor="profilePhone">Phone Number (Profile)</Label>
                     <div className="flex gap-2">
-                        <Select value={profileCountryCode} onValueChange={setProfileCountryCode}>
+                        <Select value={profileSelectedCountryCode} onValueChange={setProfileSelectedCountryCode}>
                             <SelectTrigger className="w-[120px]">
                                 <SelectValue placeholder="Country" />
                             </SelectTrigger>
                             <SelectContent>
                                 {mockCountryCodes.map(cc => (
-                                    <SelectItem key={`prof-${cc.code}`} value={cc.dial_code}>
+                                    <SelectItem key={`prof-${cc.code}`} value={cc.code}>
                                         {cc.dial_code} ({cc.code})
                                     </SelectItem>
                                 ))}
@@ -285,7 +288,6 @@ export default function SettingsPage() {
 
       <Separator />
 
-      {/* Contact Verification Section */}
       <Card className="shadow-lg rounded-lg">
         <CardHeader className="bg-primary/10">
            <div className="flex items-center gap-3">
@@ -299,13 +301,13 @@ export default function SettingsPage() {
                 <div className="space-y-2">
                     <Label htmlFor="otpLocalPhoneNumber">Phone Number (for OTP)</Label>
                     <div className="flex gap-2 items-start">
-                         <Select value={otpCountryCode} onValueChange={setOtpCountryCode} disabled={otpSent || isSendingOtp}>
+                         <Select value={otpSelectedCountryCode} onValueChange={setOtpSelectedCountryCode} disabled={otpSent || isSendingOtp}>
                             <SelectTrigger className="w-[120px]">
                                 <SelectValue placeholder="Country" />
                             </SelectTrigger>
                             <SelectContent>
                                 {mockCountryCodes.map(cc => (
-                                    <SelectItem key={`otp-${cc.code}`} value={cc.dial_code}>
+                                    <SelectItem key={`otp-${cc.code}`} value={cc.code}>
                                         {cc.dial_code} ({cc.code})
                                     </SelectItem>
                                 ))}
@@ -357,7 +359,6 @@ export default function SettingsPage() {
 
       <Separator />
 
-        {/* Account Settings Section */}
       <Card className="shadow-lg rounded-lg">
         <CardHeader className="bg-primary/10">
              <div className="flex items-center gap-3">
@@ -389,7 +390,6 @@ export default function SettingsPage() {
 
       <Separator />
 
-       {/* Preferences Section */}
       <Card className="shadow-lg rounded-lg">
         <CardHeader className="bg-primary/10">
              <div className="flex items-center gap-3">
@@ -400,7 +400,6 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="p-6">
              <form onSubmit={handlePreferencesUpdate} className="space-y-6">
-                {/* Theme Preference */}
                 <div className="space-y-2">
                     <Label htmlFor="themeSelect">Theme</Label>
                      <Select value={theme} onValueChange={setTheme}>
@@ -415,7 +414,6 @@ export default function SettingsPage() {
                     </Select>
                 </div>
 
-                {/* Notification Preferences */}
                 <div className="space-y-4 border-t pt-6">
                      <div className="flex items-center justify-between">
                        <Label htmlFor="emailNotifications" className="flex flex-col space-y-1">
@@ -455,3 +453,4 @@ export default function SettingsPage() {
   );
 }
 
+    

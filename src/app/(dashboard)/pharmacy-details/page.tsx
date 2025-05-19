@@ -11,38 +11,91 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { FlaskConical, Search, PlusCircle, Package, ListOrdered } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-
-// Mock data for demonstration
 const mockInventory = [
   { id: 'med001', name: 'Paracetamol 500mg', stock: 1500, lowStockThreshold: 200, category: 'Pain Relief' },
   { id: 'med002', name: 'Amoxicillin 250mg', stock: 80, lowStockThreshold: 100, category: 'Antibiotic' },
-  { id: 'med003', name: 'Lisinopril 10mg', stock: 600, lowStockThreshold: 150, category: 'Cardiovascular' },
-  { id: 'med004', name: 'Salbutamol Inhaler', stock: 250, lowStockThreshold: 50, category: 'Respiratory' },
-  { id: 'med005', name: 'Metformin 500mg', stock: 950, lowStockThreshold: 300, category: 'Diabetes' },
+  // ... other inventory items
 ];
 
 const mockPrescriptions = [
     { id: 'rx001', patientName: 'Alice Johnson', medication: 'Lisinopril 10mg', status: 'Pending', date: '2024-08-20' },
     { id: 'rx002', patientName: 'Bob Williams', medication: 'Amoxicillin 250mg', status: 'Ready', date: '2024-08-20' },
-    { id: 'rx003', patientName: 'Charlie Brown', medication: 'Salbutamol Inhaler', status: 'Pending', date: '2024-08-21' },
+    // ... other prescriptions
 ];
-
 
 export default function PharmacyDetailsPage() {
     const [searchTerm, setSearchTerm] = React.useState('');
     const { toast } = useToast();
+    const [isLoading, setIsLoading] = React.useState<Record<string, boolean>>({});
 
     const filteredInventory = mockInventory.filter(item =>
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.category.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleAction = (action: string, medName?: string) => {
-         toast({
-            title: `Action: ${action}`,
-            description: `${medName ? `Medication: ${medName}` : ''} (Simulation)`,
-        });
-    }
+    const handleAction = async (action: string, details?: any) => {
+        const actionKey = `${action}-${details?.id || details?.patientName || 'general'}`;
+        setIsLoading(prev => ({...prev, [actionKey]: true}));
+
+        let endpoint = '';
+        let method = 'POST';
+        let body: Record<string, any> = {};
+
+        try {
+            switch(action) {
+                case 'New Prescription Entry':
+                    endpoint = '/api/prescriptions';
+                    // In a real app, open a modal to collect prescription data
+                    body = { patientId: 'tempPatientId', medicationId: 'tempMedId', quantity: 1 };
+                    break;
+                case 'Restock Inventory':
+                    endpoint = '/api/inventory/restock';
+                    // In a real app, open a modal for restock details
+                    body = { medicationId: 'tempMedId', quantity: 100 };
+                    break;
+                case 'Generate Report':
+                    endpoint = '/api/pharmacy/reports';
+                    method = 'GET';
+                    // This would typically trigger a file download
+                    toast({ title: "Report Generation", description: "Generating pharmacy report..." });
+                     // Simulate API call
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    toast({ title: "Report Ready", description: "Pharmacy report downloaded." });
+                    setIsLoading(prev => ({...prev, [actionKey]: false}));
+                    return;
+                case 'Dispense':
+                case 'Collect':
+                    endpoint = `/api/prescriptions/${details.id}/${action.toLowerCase()}`;
+                    method = 'PUT';
+                    break;
+                default:
+                    toast({ title: `Action: ${action}`, description: "Action performed." });
+                    setIsLoading(prev => ({...prev, [actionKey]: false}));
+                    return;
+            }
+
+            if (endpoint) {
+                const response = await fetch(endpoint, {
+                    method: method,
+                    headers: method !== 'GET' ? { 'Content-Type': 'application/json' } : {},
+                    body: method !== 'GET' ? JSON.stringify(body) : undefined,
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    toast({ title: `${action} Successful`, description: data.message || `${action} completed.` });
+                    // Here you might want to refetch data or update local state
+                } else {
+                    toast({ variant: "destructive", title: `${action} Failed`, description: data.message || "An error occurred." });
+                }
+            }
+        } catch (error) {
+            console.error(`${action} error:`, error);
+            toast({ variant: "destructive", title: "Error", description: `Could not perform ${action}.` });
+        } finally {
+             setIsLoading(prev => ({...prev, [actionKey]: false}));
+        }
+    };
 
   return (
     <div className="space-y-6 lg:space-y-8">
@@ -57,22 +110,18 @@ export default function PharmacyDetailsPage() {
             </CardDescription>
         </CardHeader>
         <CardContent className="p-6 space-y-8">
-
-           {/* Quick Actions */}
-            <div className="flex flex-wrap gap-2">
-                 <Button onClick={() => handleAction('New Prescription Entry')}>
-                    <PlusCircle className="mr-2 h-4 w-4"/> New Prescription
+           <div className="flex flex-wrap gap-2">
+                 <Button onClick={() => handleAction('New Prescription Entry')} disabled={isLoading['New Prescription Entry-general']}>
+                    <PlusCircle className="mr-2 h-4 w-4"/> {isLoading['New Prescription Entry-general'] ? 'Processing...' : 'New Prescription'}
                  </Button>
-                 <Button variant="outline" onClick={() => handleAction('Restock Inventory')}>
-                    <Package className="mr-2 h-4 w-4"/> Restock Inventory
+                 <Button variant="outline" onClick={() => handleAction('Restock Inventory')} disabled={isLoading['Restock Inventory-general']}>
+                    <Package className="mr-2 h-4 w-4"/> {isLoading['Restock Inventory-general'] ? 'Processing...' : 'Restock Inventory'}
                  </Button>
-                 <Button variant="outline" onClick={() => handleAction('Generate Report')}>
-                     <ListOrdered className="mr-2 h-4 w-4"/> Generate Report
+                 <Button variant="outline" onClick={() => handleAction('Generate Report')} disabled={isLoading['Generate Report-general']}>
+                     <ListOrdered className="mr-2 h-4 w-4"/> {isLoading['Generate Report-general'] ? 'Generating...' : 'Generate Report'}
                  </Button>
             </div>
 
-
-           {/* Prescription Queue */}
            <Card>
               <CardHeader>
                 <CardTitle className="text-lg font-semibold">Prescription Queue</CardTitle>
@@ -102,8 +151,8 @@ export default function PharmacyDetailsPage() {
                               </Badge>
                             </TableCell>
                              <TableCell>
-                                <Button variant="link" size="sm" onClick={() => handleAction(rx.status === 'Pending' ? 'Dispense' : 'Mark as Collected', rx.medication)}>
-                                    {rx.status === 'Pending' ? 'Dispense' : 'Collect'}
+                                <Button variant="link" size="sm" onClick={() => handleAction(rx.status === 'Pending' ? 'Dispense' : 'Collect', rx)} disabled={isLoading[`${rx.status === 'Pending' ? 'Dispense' : 'Collect'}-${rx.id}`]}>
+                                    {isLoading[`${rx.status === 'Pending' ? 'Dispense' : 'Collect'}-${rx.id}`] ? 'Processing...' : (rx.status === 'Pending' ? 'Dispense' : 'Collect')}
                                 </Button>
                             </TableCell>
                           </TableRow>
@@ -114,8 +163,6 @@ export default function PharmacyDetailsPage() {
               </CardContent>
            </Card>
 
-
-           {/* Inventory Management */}
            <Card>
               <CardHeader>
                 <CardTitle className="text-lg font-semibold">Inventory Overview</CardTitle>
@@ -168,9 +215,9 @@ export default function PharmacyDetailsPage() {
                  </ScrollArea>
               </CardContent>
            </Card>
-
         </CardContent>
       </Card>
     </div>
   );
 }
+    

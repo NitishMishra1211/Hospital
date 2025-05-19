@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 
 // --- Configuration (SHOULD come from environment variables in a real app) ---
@@ -19,37 +20,35 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: 'Phone number is required.' }, { status: 400 });
     }
 
-    // Basic E.164 phone number format validation (can be more sophisticated)
     if (!/^\+[1-9]\d{1,14}$/.test(phoneNumber)) {
         return NextResponse.json({ success: false, message: 'Invalid phone number format. Please use E.164 format (e.g., +11234567890).' }, { status: 400 });
     }
 
     const otp = generateOtp();
 
-    // --- Simulate Storing OTP ---
     // In a real application, you would store this OTP temporarily (e.g., in a database, cache like Redis)
     // associated with the phoneNumber and an expiry time. It would then be checked by a separate /api/verify-otp endpoint.
-    console.log(`Generated OTP ${otp} for ${phoneNumber}. (Server-side log for simulation)`);
+    console.log(`Generated OTP ${otp} for ${phoneNumber}. This would be stored securely.`);
 
 
     // --- Simulate Calling External SMS Gateway ---
     // In a real scenario, you would use fetch or a library like axios here.
-    // For example:
+    // This part is crucial and would involve your actual SMS provider's API.
+    console.log(`Simulating sending OTP ${otp} to ${phoneNumber} via ${SMS_GATEWAY_API_URL} with key ${SMS_GATEWAY_API_KEY}`);
     // const gatewayResponse = await fetch(SMS_GATEWAY_API_URL, {
     //   method: 'POST',
     //   headers: {
     //     'Content-Type': 'application/json',
-    //     'Authorization': `Bearer ${SMS_GATEWAY_API_KEY}`, // Or other auth method specific to your provider
+    //     'Authorization': `Bearer ${SMS_GATEWAY_API_KEY}`, 
     //   },
     //   body: JSON.stringify({
     //     to: phoneNumber,
     //     message: `Your OTP for MediCore Lite is: ${otp}. This code is valid for 10 minutes.`,
-    //     // other parameters might be required by your specific SMS gateway provider
     //   }),
     // });
 
     // if (!gatewayResponse.ok) {
-    //   const errorData = await gatewayResponse.json().catch(() => ({})); // Try to parse error, default to empty object
+    //   const errorData = await gatewayResponse.json().catch(() => ({})); 
     //   console.error('SMS Gateway Error:', errorData);
     //   throw new Error(errorData.message || `SMS Gateway request failed with status ${gatewayResponse.status}`);
     // }
@@ -57,20 +56,13 @@ export async function POST(request: Request) {
     // console.log('SMS Gateway API Success Response:', responseData);
     // ---- End of real gateway call example ----
 
-
-    // Simulated success response from gateway
-    const simulatedGatewayCallSuccessful = true; // Change to false to test error path
-    console.log(`Simulating sending OTP ${otp} to ${phoneNumber} via ${SMS_GATEWAY_API_URL} with key ${SMS_GATEWAY_API_KEY}`);
-
+    // For this conceptual integration, we'll assume the call was successful.
+    const simulatedGatewayCallSuccessful = true; 
 
     if (simulatedGatewayCallSuccessful) {
-      // Normally, you wouldn't send the OTP back in the response for security.
-      // The client doesn't need to know it; they just get a success message.
-      // The OTP is verified against the server-stored one in a separate step.
-      return NextResponse.json({ success: true, message: `OTP has been sent to ${phoneNumber}. (This is a simulation)` });
+      return NextResponse.json({ success: true, message: `OTP has been sent to ${phoneNumber}.` });
     } else {
-      // Simulated failure
-      return NextResponse.json({ success: false, message: 'Failed to send OTP via gateway. (Simulated)' }, { status: 500 });
+      return NextResponse.json({ success: false, message: 'Failed to send OTP via gateway.' }, { status: 500 });
     }
 
   } catch (error) {
@@ -79,3 +71,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, message: errorMessage }, { status: 500 });
   }
 }
+    

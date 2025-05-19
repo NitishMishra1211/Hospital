@@ -35,7 +35,6 @@ export default function EChannelingPage() {
     const [patientName, setPatientName] = React.useState('');
     const [patientContact, setPatientContact] = React.useState('');
     const { toast } = useToast();
-    const [isLoading, setIsLoading] = React.useState(false);
 
     const filteredDoctors = eChannelingDoctors.filter(doctor =>
         doctor.specialization.toLowerCase().includes(searchSpecialization.toLowerCase())
@@ -43,7 +42,7 @@ export default function EChannelingPage() {
 
     const selectedDoctor = eChannelingDoctors.find(doc => doc.id === selectedDoctorId);
 
-    const handleBooking = async (event: React.FormEvent<HTMLFormElement>) => {
+    const handleBooking = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (!selectedDoctor || !selectedDate || !selectedTime || !patientName || !patientContact) {
             toast({
@@ -53,7 +52,6 @@ export default function EChannelingPage() {
             });
             return;
         }
-        setIsLoading(true);
 
         const bookingDetails = {
             doctorId: selectedDoctor.id,
@@ -64,44 +62,19 @@ export default function EChannelingPage() {
             patientContact,
         };
 
-        try {
-            // Replace with your actual API endpoint
-            const response = await fetch('/api/appointments', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bookingDetails),
-            });
-            const data = await response.json();
+        console.log("Booking Details:", bookingDetails);
 
-            if (response.ok) {
-                toast({
-                    title: "Appointment Booked!",
-                    description: data.message || `Appointment with ${selectedDoctor.name} on ${format(selectedDate, "PPP")} at ${selectedTime} for ${patientName}.`,
-                    action: <CheckCircle className="text-green-500" />,
-                });
-                setSearchSpecialization('');
-                setSelectedDoctorId(undefined);
-                setSelectedDate(undefined);
-                setSelectedTime(undefined);
-                setPatientName('');
-                setPatientContact('');
-            } else {
-                toast({
-                    variant: "destructive",
-                    title: "Booking Failed",
-                    description: data.message || "Could not book appointment. Please try again.",
-                });
-            }
-        } catch (error) {
-            console.error("Booking error:", error);
-            toast({
-                variant: "destructive",
-                title: "Booking Error",
-                description: "An unexpected error occurred. Please try again.",
-            });
-        } finally {
-            setIsLoading(false);
-        }
+        toast({
+            title: "Appointment Booking Submitted!",
+            description: `Appointment with ${selectedDoctor.name} on ${format(selectedDate, "PPP")} at ${selectedTime} for ${patientName} logged to console.`,
+            action: <CheckCircle className="text-green-500" />,
+        });
+        setSearchSpecialization('');
+        setSelectedDoctorId(undefined);
+        setSelectedDate(undefined);
+        setSelectedTime(undefined);
+        setPatientName('');
+        setPatientContact('');
     };
 
   return (
@@ -134,7 +107,6 @@ export default function EChannelingPage() {
                             }}
                             className="pl-8 w-full md:w-1/2 lg:w-1/3"
                             aria-label="Search doctors by specialization"
-                            disabled={isLoading}
                         />
                     </div>
                 </CardHeader>
@@ -146,11 +118,9 @@ export default function EChannelingPage() {
                                     key={doctor.id}
                                     className={cn(
                                         "cursor-pointer transition-colors hover:bg-muted/50",
-                                        selectedDoctorId === doctor.id && "ring-2 ring-primary bg-muted/60",
-                                        isLoading && "opacity-50 cursor-not-allowed"
+                                        selectedDoctorId === doctor.id && "ring-2 ring-primary bg-muted/60"
                                     )}
                                     onClick={() => {
-                                        if (isLoading) return;
                                         setSelectedDoctorId(doctor.id);
                                         setSelectedDate(undefined); 
                                         setSelectedTime(undefined);
@@ -196,7 +166,6 @@ export default function EChannelingPage() {
                                                 "w-full justify-start text-left font-normal",
                                                 !selectedDate && "text-muted-foreground"
                                             )}
-                                            disabled={isLoading}
                                             type="button"
                                             >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
@@ -212,7 +181,7 @@ export default function EChannelingPage() {
                                                     setSelectedTime(undefined); 
                                                 }}
                                                 initialFocus
-                                                disabled={(date) => date < new Date(new Date().setHours(0,0,0,0)) || isLoading } 
+                                                disabled={(date) => date < new Date(new Date().setHours(0,0,0,0)) } 
                                             />
                                         </PopoverContent>
                                     </Popover>
@@ -228,7 +197,7 @@ export default function EChannelingPage() {
                                                     type="button"
                                                     variant={selectedTime === slot.time ? "default" : "outline"}
                                                     size="sm"
-                                                    disabled={!slot.available || isLoading}
+                                                    disabled={!slot.available}
                                                     onClick={() => setSelectedTime(slot.time)}
                                                     className={cn(!slot.available && "text-muted-foreground line-through")}
                                                 >
@@ -247,26 +216,19 @@ export default function EChannelingPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label htmlFor="patientName" className="text-sm font-medium">Patient Full Name *</label>
-                                        <Input id="patientName" placeholder="e.g., Jane Smith" value={patientName} onChange={(e) => setPatientName(e.target.value)} required disabled={isLoading} />
+                                        <Input id="patientName" placeholder="e.g., Jane Smith" value={patientName} onChange={(e) => setPatientName(e.target.value)} required />
                                     </div>
                                     <div className="space-y-2">
                                         <label htmlFor="patientContact" className="text-sm font-medium">Contact Number *</label>
-                                        <Input id="patientContact" type="tel" placeholder="e.g., 555-987-6543" value={patientContact} onChange={(e) => setPatientContact(e.target.value)} required disabled={isLoading} />
+                                        <Input id="patientContact" type="tel" placeholder="e.g., 555-987-6543" value={patientContact} onChange={(e) => setPatientContact(e.target.value)} required />
                                     </div>
                                 </div>
                              </div>
 
                              <div className="flex justify-end pt-4">
-                                <Button type="submit" disabled={isLoading}>
-                                     {isLoading ? (
-                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                      ) : (
-                                        <CheckCircle className="mr-2 h-4 w-4"/>
-                                      )}
-                                    {isLoading ? 'Booking...' : 'Book Appointment'}
+                                <Button type="submit">
+                                    <CheckCircle className="mr-2 h-4 w-4"/>
+                                    Book Appointment
                                 </Button>
                              </div>
                          </form>

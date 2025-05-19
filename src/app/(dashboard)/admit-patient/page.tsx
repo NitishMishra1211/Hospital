@@ -20,11 +20,9 @@ import { useToast } from '@/hooks/use-toast';
 export default function AdmitPatientPage() {
     const [dob, setDob] = React.useState<Date | undefined>();
     const { toast } = useToast();
-    const [isLoading, setIsLoading] = React.useState(false);
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        setIsLoading(true);
         const formData = new FormData(event.target as HTMLFormElement);
         const patientData = {
             patientName: formData.get('patientName'),
@@ -38,39 +36,14 @@ export default function AdmitPatientPage() {
             policyNumber: formData.get('policyNumber'),
         };
 
-        try {
-            // Replace with your actual API endpoint
-            const response = await fetch('/api/patients', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(patientData),
-            });
-            const data = await response.json();
+        console.log("Patient Data for Admission:", patientData);
 
-            if (response.ok) {
-                toast({
-                    title: "Patient Admitted",
-                    description: data.message || "Patient details have been successfully recorded.",
-                });
-                (event.target as HTMLFormElement).reset();
-                setDob(undefined);
-            } else {
-                toast({
-                    variant: "destructive",
-                    title: "Admission Failed",
-                    description: data.message || "Could not admit patient. Please try again.",
-                });
-            }
-        } catch (error) {
-            console.error("Admission error:", error);
-            toast({
-                variant: "destructive",
-                title: "Admission Error",
-                description: "An unexpected error occurred. Please try again.",
-            });
-        } finally {
-            setIsLoading(false);
-        }
+        toast({
+            title: "Patient Admission Submitted",
+            description: "Patient details have been logged to the console.",
+        });
+        (event.target as HTMLFormElement).reset();
+        setDob(undefined);
     };
 
   return (
@@ -92,7 +65,7 @@ export default function AdmitPatientPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="patientName">Full Name *</Label>
-                <Input id="patientName" name="patientName" placeholder="e.g., John Doe" required disabled={isLoading} />
+                <Input id="patientName" name="patientName" placeholder="e.g., John Doe" required />
               </div>
               <div className="space-y-2">
                  <Label htmlFor="dob">Date of Birth *</Label>
@@ -104,7 +77,6 @@ export default function AdmitPatientPage() {
                             "w-full justify-start text-left font-normal",
                             !dob && "text-muted-foreground"
                         )}
-                        disabled={isLoading}
                         type="button"
                         >
                         <CalendarIcon className="mr-2 h-4 w-4" />
@@ -126,7 +98,7 @@ export default function AdmitPatientPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="gender">Gender *</Label>
-                <Select name="gender" required disabled={isLoading}>
+                <Select name="gender" required>
                     <SelectTrigger id="gender">
                         <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
@@ -140,12 +112,12 @@ export default function AdmitPatientPage() {
               </div>
                <div className="space-y-2">
                 <Label htmlFor="contactNumber">Contact Number * <Phone className="inline h-3 w-3 ml-1"/></Label>
-                <Input id="contactNumber" name="contactNumber" type="tel" placeholder="e.g., 555-123-4567" required disabled={isLoading} />
+                <Input id="contactNumber" name="contactNumber" type="tel" placeholder="e.g., 555-123-4567" required />
               </div>
             </div>
              <div className="space-y-2">
                 <Label htmlFor="address">Address <HomeIcon className="inline h-3 w-3 ml-1"/></Label>
-                <Textarea id="address" name="address" placeholder="Enter patient's full address" disabled={isLoading} />
+                <Textarea id="address" name="address" placeholder="Enter patient's full address" />
             </div>
 
              {/* Admission Details */}
@@ -153,11 +125,11 @@ export default function AdmitPatientPage() {
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="reason">Reason for Admission *</Label>
-                    <Textarea id="reason" name="reason" placeholder="Briefly describe the reason for admission" required disabled={isLoading} />
+                    <Textarea id="reason" name="reason" placeholder="Briefly describe the reason for admission" required />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="assignedDoctor">Assign Doctor * <Stethoscope className="inline h-3 w-3 ml-1"/></Label>
-                    <Select name="assignedDoctor" required disabled={isLoading}>
+                    <Select name="assignedDoctor" required>
                         <SelectTrigger id="assignedDoctor">
                             <SelectValue placeholder="Select a doctor" />
                         </SelectTrigger>
@@ -178,26 +150,19 @@ export default function AdmitPatientPage() {
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="insuranceProvider">Provider</Label>
-                    <Input id="insuranceProvider" name="insuranceProvider" placeholder="e.g., Blue Cross" disabled={isLoading} />
+                    <Input id="insuranceProvider" name="insuranceProvider" placeholder="e.g., Blue Cross" />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="policyNumber">Policy Number</Label>
-                    <Input id="policyNumber" name="policyNumber" placeholder="e.g., XYZ123456789" disabled={isLoading} />
+                    <Input id="policyNumber" name="policyNumber" placeholder="e.g., XYZ123456789" />
                 </div>
              </div>
 
             {/* Submit Button */}
             <div className="flex justify-end pt-6">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? (
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  ) : (
-                    <UserPlus className="mr-2 h-4 w-4" />
-                  )}
-                {isLoading ? 'Admitting...' : 'Admit Patient'}
+              <Button type="submit">
+                <UserPlus className="mr-2 h-4 w-4" />
+                Admit Patient
               </Button>
             </div>
            </form>

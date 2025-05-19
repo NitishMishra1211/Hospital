@@ -22,7 +22,6 @@ const mockPayments = [
 export default function PaymentDetailsPage() {
     const [searchTerm, setSearchTerm] = React.useState('');
     const { toast } = useToast();
-    const [isLoading, setIsLoading] = React.useState<Record<string, boolean>>({});
 
     const filteredPayments = mockPayments.filter(payment =>
         payment.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -30,64 +29,25 @@ export default function PaymentDetailsPage() {
         payment.status.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleAction = async (action: string, details?: any) => {
-        const actionKey = `${action}-${details?.invoiceId || details?.patientName || 'general'}`;
-        setIsLoading(prev => ({...prev, [actionKey]: true}));
+    const handleAction = (action: string, details?: any) => {
+        console.log("Action:", action, "Details:", details);
 
-        try {
-            let endpoint = '';
-            let method = 'POST';
-            let body = {};
-
-            if (action === 'New Invoice Generation') {
-                endpoint = '/api/invoices'; // Placeholder
-                method = 'POST';
-                body = { patientId: 'somePatientId', amount: 0, items: [] }; // Example body
-                // In a real app, you'd open a modal to collect invoice details
-                 await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-                toast({ title: "Invoice Generated", description: "New invoice created successfully."});
-
-            } else if (action === 'Download Payment Report') {
-                endpoint = '/api/payments/report'; // Placeholder
-                method = 'GET';
-                // This would typically trigger a file download
-                // For now, just a toast.
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-                toast({ title: "Report Downloaded", description: "Payment report is being downloaded."});
-                setIsLoading(prev => ({...prev, [actionKey]: false}));
-                return;
-            } else if (action === 'View Details') {
-                // This might navigate or fetch more details
-                toast({ title: "Viewing Details", description: `Loading details for ${details}` });
-                console.log("View Details for:", details);
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate loading
-                setIsLoading(prev => ({...prev, [actionKey]: false}));
-                return;
-            } else {
-                 toast({ title: `Action: ${action}`, description: "Action performed." });
-                 setIsLoading(prev => ({...prev, [actionKey]: false}));
-                 return;
-            }
-            
-            // Conceptual API Call (Example for New Invoice)
-            if (endpoint && (method === 'POST' || method === 'PUT')) {
-                const response = await fetch(endpoint, {
-                    method: method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body),
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    toast({ title: `${action} Successful`, description: data.message || `${action} completed.` });
-                } else {
-                    toast({ variant: "destructive", title: `${action} Failed`, description: data.message || "An error occurred." });
-                }
-            }
-        } catch (error) {
-            console.error(`${action} error:`, error);
-            toast({ variant: "destructive", title: "Error", description: `Could not perform ${action}.` });
-        } finally {
-            setIsLoading(prev => ({...prev, [actionKey]: false}));
+        let toastMessage = `Action '${action}' triggered.`;
+        if (details) {
+            toastMessage += ` Details: ${JSON.stringify(details)}`;
+        }
+        
+        if (action === 'New Invoice Generation') {
+            // In a real app, you'd open a modal to collect invoice details
+            console.log("Simulating new invoice generation for a patient...");
+            toast({ title: "New Invoice Action", description: "Invoice generation process initiated (logged to console)." });
+        } else if (action === 'Download Payment Report') {
+            console.log("Simulating download of payment report...");
+            toast({ title: "Download Report Action", description: "Payment report download initiated (logged to console)." });
+        } else if (action === 'View Details') {
+            toast({ title: "Viewing Details", description: `Details for ${details} logged to console.` });
+        } else {
+            toast({ title: `Action: ${action}`, description: toastMessage });
         }
     };
 
@@ -135,11 +95,11 @@ export default function PaymentDetailsPage() {
                     />
                 </div>
                  <div className="flex gap-2 flex-wrap">
-                     <Button onClick={() => handleAction('New Invoice Generation')} disabled={isLoading['New Invoice Generation-general']}>
-                        <FilePlus className="mr-2 h-4 w-4"/> {isLoading['New Invoice Generation-general'] ? 'Generating...' : 'Generate Invoice'}
+                     <Button onClick={() => handleAction('New Invoice Generation')}>
+                        <FilePlus className="mr-2 h-4 w-4"/> Generate Invoice
                      </Button>
-                     <Button variant="outline" onClick={() => handleAction('Download Payment Report')} disabled={isLoading['Download Payment Report-general']}>
-                        <Download className="mr-2 h-4 w-4" /> {isLoading['Download Payment Report-general'] ? 'Downloading...' : 'Download Report'}
+                     <Button variant="outline" onClick={() => handleAction('Download Payment Report')}>
+                        <Download className="mr-2 h-4 w-4" /> Download Report
                     </Button>
                  </div>
             </div>
@@ -177,8 +137,8 @@ export default function PaymentDetailsPage() {
                               </Badge>
                             </TableCell>
                             <TableCell>
-                                <Button variant="link" size="sm" onClick={() => handleAction('View Details', payment.invoiceId)} disabled={isLoading[`View Details-${payment.invoiceId}`]}>
-                                    {isLoading[`View Details-${payment.invoiceId}`] ? 'Loading...' : 'Details'}
+                                <Button variant="link" size="sm" onClick={() => handleAction('View Details', payment.invoiceId)}>
+                                    Details
                                 </Button>
                             </TableCell>
                           </TableRow>

@@ -26,74 +26,43 @@ const mockPrescriptions = [
 export default function PharmacyDetailsPage() {
     const [searchTerm, setSearchTerm] = React.useState('');
     const { toast } = useToast();
-    const [isLoading, setIsLoading] = React.useState<Record<string, boolean>>({});
 
     const filteredInventory = mockInventory.filter(item =>
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.category.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleAction = async (action: string, details?: any) => {
-        const actionKey = `${action}-${details?.id || details?.patientName || 'general'}`;
-        setIsLoading(prev => ({...prev, [actionKey]: true}));
+    const handleAction = (action: string, details?: any) => {
+        console.log("Pharmacy Action:", action, "Details:", details);
 
-        let endpoint = '';
-        let method = 'POST';
-        let body: Record<string, any> = {};
-
-        try {
-            switch(action) {
-                case 'New Prescription Entry':
-                    endpoint = '/api/prescriptions';
-                    // In a real app, open a modal to collect prescription data
-                    body = { patientId: 'tempPatientId', medicationId: 'tempMedId', quantity: 1 };
-                    break;
-                case 'Restock Inventory':
-                    endpoint = '/api/inventory/restock';
-                    // In a real app, open a modal for restock details
-                    body = { medicationId: 'tempMedId', quantity: 100 };
-                    break;
-                case 'Generate Report':
-                    endpoint = '/api/pharmacy/reports';
-                    method = 'GET';
-                    // This would typically trigger a file download
-                    toast({ title: "Report Generation", description: "Generating pharmacy report..." });
-                     // Simulate API call
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    toast({ title: "Report Ready", description: "Pharmacy report downloaded." });
-                    setIsLoading(prev => ({...prev, [actionKey]: false}));
-                    return;
-                case 'Dispense':
-                case 'Collect':
-                    endpoint = `/api/prescriptions/${details.id}/${action.toLowerCase()}`;
-                    method = 'PUT';
-                    break;
-                default:
-                    toast({ title: `Action: ${action}`, description: "Action performed." });
-                    setIsLoading(prev => ({...prev, [actionKey]: false}));
-                    return;
-            }
-
-            if (endpoint) {
-                const response = await fetch(endpoint, {
-                    method: method,
-                    headers: method !== 'GET' ? { 'Content-Type': 'application/json' } : {},
-                    body: method !== 'GET' ? JSON.stringify(body) : undefined,
-                });
-                const data = await response.json();
-
-                if (response.ok) {
-                    toast({ title: `${action} Successful`, description: data.message || `${action} completed.` });
-                    // Here you might want to refetch data or update local state
-                } else {
-                    toast({ variant: "destructive", title: `${action} Failed`, description: data.message || "An error occurred." });
-                }
-            }
-        } catch (error) {
-            console.error(`${action} error:`, error);
-            toast({ variant: "destructive", title: "Error", description: `Could not perform ${action}.` });
-        } finally {
-             setIsLoading(prev => ({...prev, [actionKey]: false}));
+        let toastMessage = `Pharmacy Action '${action}' triggered.`;
+        if (details) {
+            toastMessage += ` Details: ${JSON.stringify(details)}`;
+        }
+        
+        switch(action) {
+            case 'New Prescription Entry':
+                // In a real app, open a modal to collect prescription data
+                console.log("Simulating new prescription entry...");
+                toast({ title: "New Prescription", description: "Prescription entry process initiated (logged to console)." });
+                break;
+            case 'Restock Inventory':
+                // In a real app, open a modal for restock details
+                console.log("Simulating inventory restock for item:", details);
+                toast({ title: "Restock Inventory", description: "Inventory restock process initiated (logged to console)." });
+                break;
+            case 'Generate Report':
+                console.log("Simulating generation of pharmacy report...");
+                toast({ title: "Generate Report", description: "Pharmacy report generation initiated (logged to console)." });
+                break;
+            case 'Dispense':
+            case 'Collect':
+                console.log(`Simulating ${action} for prescription:`, details);
+                toast({ title: action, description: `${action} process for prescription ${details.id} initiated (logged to console).`});
+                // Here you might update local state to reflect the change, e.g., mockPrescriptions
+                break;
+            default:
+                toast({ title: `Action: ${action}`, description: toastMessage });
         }
     };
 
@@ -111,14 +80,14 @@ export default function PharmacyDetailsPage() {
         </CardHeader>
         <CardContent className="p-6 space-y-8">
            <div className="flex flex-wrap gap-2">
-                 <Button onClick={() => handleAction('New Prescription Entry')} disabled={isLoading['New Prescription Entry-general']}>
-                    <PlusCircle className="mr-2 h-4 w-4"/> {isLoading['New Prescription Entry-general'] ? 'Processing...' : 'New Prescription'}
+                 <Button onClick={() => handleAction('New Prescription Entry')}>
+                    <PlusCircle className="mr-2 h-4 w-4"/> New Prescription
                  </Button>
-                 <Button variant="outline" onClick={() => handleAction('Restock Inventory')} disabled={isLoading['Restock Inventory-general']}>
-                    <Package className="mr-2 h-4 w-4"/> {isLoading['Restock Inventory-general'] ? 'Processing...' : 'Restock Inventory'}
+                 <Button variant="outline" onClick={() => handleAction('Restock Inventory')}>
+                    <Package className="mr-2 h-4 w-4"/> Restock Inventory
                  </Button>
-                 <Button variant="outline" onClick={() => handleAction('Generate Report')} disabled={isLoading['Generate Report-general']}>
-                     <ListOrdered className="mr-2 h-4 w-4"/> {isLoading['Generate Report-general'] ? 'Generating...' : 'Generate Report'}
+                 <Button variant="outline" onClick={() => handleAction('Generate Report')}>
+                     <ListOrdered className="mr-2 h-4 w-4"/> Generate Report
                  </Button>
             </div>
 
@@ -151,8 +120,8 @@ export default function PharmacyDetailsPage() {
                               </Badge>
                             </TableCell>
                              <TableCell>
-                                <Button variant="link" size="sm" onClick={() => handleAction(rx.status === 'Pending' ? 'Dispense' : 'Collect', rx)} disabled={isLoading[`${rx.status === 'Pending' ? 'Dispense' : 'Collect'}-${rx.id}`]}>
-                                    {isLoading[`${rx.status === 'Pending' ? 'Dispense' : 'Collect'}-${rx.id}`] ? 'Processing...' : (rx.status === 'Pending' ? 'Dispense' : 'Collect')}
+                                <Button variant="link" size="sm" onClick={() => handleAction(rx.status === 'Pending' ? 'Dispense' : 'Collect', rx)}>
+                                    {rx.status === 'Pending' ? 'Dispense' : 'Collect'}
                                 </Button>
                             </TableCell>
                           </TableRow>

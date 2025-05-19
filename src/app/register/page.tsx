@@ -3,6 +3,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // Import useRouter
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,7 @@ import { UserPlus, LogIn } from 'lucide-react';
 
 export default function RegisterPage() {
   const { toast } = useToast();
+  const router = useRouter(); // Initialize router
   const [name, setName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
@@ -30,13 +32,13 @@ export default function RegisterPage() {
     // In a real app, you would handle registration logic here
     console.log('Registration submitted:', { name, email, password });
     toast({
-      title: 'Registration Attempted',
-      description: 'Registration functionality is not yet implemented. (Simulation)',
+      title: 'Registration Successful (Simulated)',
+      description: 'Redirecting to dashboard...',
     });
-    // setName('');
-    // setEmail('');
-    // setPassword('');
-    // setConfirmPassword('');
+    // Simulate successful registration and redirect
+    setTimeout(() => {
+        router.push('/'); // Redirect to home page
+    }, 1000);
   };
 
   return (
@@ -118,3 +120,5 @@ export default function RegisterPage() {
     </div>
   );
 }
+
+    

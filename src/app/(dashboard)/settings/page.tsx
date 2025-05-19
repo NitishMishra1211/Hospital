@@ -2,6 +2,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation'; // Import useRouter
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Settings, UserCircle, Lock, Palette, Bell, Phone } from 'lucide-react';
+import { Settings, UserCircle, Lock, Palette, Bell, Phone, LogOut } from 'lucide-react'; // Added LogOut
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { mockCountryCodes, CountryCode } from '@/lib/mock-data';
@@ -23,7 +24,7 @@ const currentUser = {
 };
 
 const extractPhoneParts = (fullPhoneNumber: string | undefined): { countryCodeKey: string, localNumber: string } => {
-    const defaultCountry = mockCountryCodes.find(c => c.code === 'US') || mockCountryCodes[0]; // Default to US or first in list
+    const defaultCountry = mockCountryCodes.find(c => c.code === 'US') || mockCountryCodes[0];
 
     if (!fullPhoneNumber) {
         return { countryCodeKey: defaultCountry.code, localNumber: '' };
@@ -35,41 +36,33 @@ const extractPhoneParts = (fullPhoneNumber: string | undefined): { countryCodeKe
 
     for (const cc of mockCountryCodes) {
         if (fullPhoneNumber.startsWith(cc.dial_code)) {
-            // Check if this match is longer, or if it's the same length but a more specific one (e.g. US for +1)
             if (cc.dial_code.length > longestMatchLength) {
                 longestMatchLength = cc.dial_code.length;
                 matchedCountry = cc;
                 localNumber = fullPhoneNumber.substring(cc.dial_code.length).replace(/[^0-9]/g, '');
             } else if (cc.dial_code.length === longestMatchLength && cc.code === 'US' && matchedCountry.dial_code === '+1' && matchedCountry.code !== 'US') {
-                // Prioritize US for ambiguous +1 if current best match for +1 is not US
                 matchedCountry = cc;
                 localNumber = fullPhoneNumber.substring(cc.dial_code.length).replace(/[^0-9]/g, '');
-            } else if (cc.dial_code.length === longestMatchLength && matchedCountry.dial_code !== '+1' && cc.dial_code === '+1' ) {
-                 // If current best match is not +1, but this one is +1 (and same length), consider it.
-                 // This case is less likely to be an improvement unless we have very specific rules.
-                 // For now, sticking with the first longest match or US for +1.
             }
         }
     }
     
-    // If no dial_code prefix was found (longestMatchLength is still 0), use default and try to clean localNumber
     if (longestMatchLength === 0) {
         const numericPhone = fullPhoneNumber.replace(/[^0-9]/g, '');
         const numericDefaultDialCode = defaultCountry.dial_code.replace('+', '');
         if (numericPhone.startsWith(numericDefaultDialCode) && numericPhone.length > numericDefaultDialCode.length) {
             localNumber = numericPhone.substring(numericDefaultDialCode.length);
         } else {
-            localNumber = numericPhone; // Assign whatever numbers are left
+            localNumber = numericPhone;
         }
-        // matchedCountry is already defaultCountry
     }
-
 
     return { countryCodeKey: matchedCountry.code, localNumber };
 };
 
 
 export default function SettingsPage() {
+    const router = useRouter(); // Initialize router
     const { toast } = useToast();
     const [currentPassword, setCurrentPassword] = React.useState('');
     const [newPassword, setNewPassword] = React.useState('');
@@ -83,7 +76,7 @@ export default function SettingsPage() {
     const [profileSelectedCountryCode, setProfileSelectedCountryCode] = React.useState(initialProfilePhoneParts.countryCodeKey);
     const [profileLocalPhoneNumber, setProfileLocalPhoneNumber] = React.useState(initialProfilePhoneParts.localNumber);
 
-    const initialOtpPhoneParts = extractPhoneParts(currentUser.phone); // Can be different if user has a different OTP number
+    const initialOtpPhoneParts = extractPhoneParts(currentUser.phone); 
     const [otpSelectedCountryCode, setOtpSelectedCountryCode] = React.useState(initialOtpPhoneParts.countryCodeKey);
     const [otpLocalPhoneNumber, setOtpLocalPhoneNumber] = React.useState(initialOtpPhoneParts.localNumber);
 
@@ -221,12 +214,26 @@ export default function SettingsPage() {
         setIsVerifyingOtp(false);
     };
 
+    const handleLogout = () => {
+        // In a real app, clear authentication tokens/session here
+        toast({
+            title: "Logged Out",
+            description: "You have been successfully logged out.",
+        });
+        router.push('/login'); // Redirect to login page
+    };
+
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center gap-3 mb-6">
-        <Settings className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold">User Settings</h1>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+            <Settings className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold">User Settings</h1>
+        </div>
+        <Button variant="outline" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" /> Logout
+        </Button>
       </div>
 
       <Card className="shadow-lg rounded-lg">

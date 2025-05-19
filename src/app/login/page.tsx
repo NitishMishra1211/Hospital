@@ -3,6 +3,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // Import useRouter
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,7 @@ import { LogIn, UserPlus } from 'lucide-react';
 
 export default function LoginPage() {
   const { toast } = useToast();
+  const router = useRouter(); // Initialize router
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
 
@@ -20,11 +22,14 @@ export default function LoginPage() {
     // In a real app, you would handle authentication here
     console.log('Login submitted:', { email, password });
     toast({
-      title: 'Login Attempted',
-      description: 'Login functionality is not yet implemented. (Simulation)',
+      title: 'Login Successful (Simulated)',
+      description: 'Redirecting to dashboard...',
     });
-    // setEmail('');
-    // setPassword('');
+    // Simulate successful login and redirect
+    // In a real app, this would happen after successful authentication
+    setTimeout(() => {
+        router.push('/'); // Redirect to home page
+    }, 1000);
   };
 
   return (
@@ -32,8 +37,6 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            {/* Placeholder for a logo if you have one */}
-            {/* <img src="https://placehold.co/100x40.png" alt="MediCore Logo" data-ai-hint="logo hospital" className="h-10" /> */}
              <LogIn className="h-12 w-12 text-primary" />
           </div>
           <CardTitle className="text-2xl font-bold">Welcome Back!</CardTitle>
@@ -85,3 +88,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    

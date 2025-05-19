@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserPlus, Calendar as CalendarIcon, Stethoscope, Phone, Home as HomeIcon } from 'lucide-react';
+import { UserPlus, Calendar as CalendarIcon, Stethoscope, Phone, Home as HomeIcon, WeightIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
@@ -16,34 +16,84 @@ import { format } from "date-fns";
 import { mockDoctors } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 
+// Helper function to calculate age
+const calculateAge = (dob: Date): number => {
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+        age--;
+    }
+    return age;
+};
+
+// Helper to generate a simple client-side ID (for pid)
+const generatePatientId = (): string => {
+    return `P${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+};
+
 
 export default function AdmitPatientPage() {
     const [dob, setDob] = React.useState<Date | undefined>();
+    const [isLoading, setIsLoading] = React.useState(false);
     const { toast } = useToast();
 
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        setIsLoading(true);
         const formData = new FormData(event.target as HTMLFormElement);
+
+        const age = dob ? calculateAge(dob) : 0;
+        const patientWeight = formData.get('patientWeight') ? parseFloat(formData.get('patientWeight') as string) : 0;
+
         const patientData = {
-            patientName: formData.get('patientName'),
-            dob: dob ? format(dob, "yyyy-MM-dd") : null,
-            gender: formData.get('gender'),
-            contactNumber: formData.get('contactNumber'),
-            address: formData.get('address'),
-            reasonForAdmission: formData.get('reason'),
-            assignedDoctor: formData.get('assignedDoctor'),
-            insuranceProvider: formData.get('insuranceProvider'),
-            policyNumber: formData.get('policyNumber'),
+            pid: generatePatientId(), // Generating client-side PID
+            name: formData.get('patientName') as string,
+            age: age,
+            weight: patientWeight,
+            gender: formData.get('gender') as string,
+            address: formData.get('address') as string,
+            insuranceProvider: formData.get('insuranceProvider') as string,
+            policyNumber: formData.get('policyNumber') as string,
+            phoneno: formData.get('contactNumber') as string,
+            disease: formData.get('reason') as string,
+            doctorid: formData.get('assignedDoctor') as string,
         };
 
-        console.log("Patient Data for Admission:", patientData);
+        try {
+            const response = await fetch('http://localhost:5223/api/Patients', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(patientData),
+            });
 
-        toast({
-            title: "Patient Admission Submitted",
-            description: "Patient details have been logged to the console.",
-        });
-        (event.target as HTMLFormElement).reset();
-        setDob(undefined);
+            if (response.ok) {
+                toast({
+                    title: "Patient Admitted Successfully",
+                    description: `Patient ${patientData.name} has been added to the system.`,
+                });
+                (event.target as HTMLFormElement).reset();
+                setDob(undefined);
+            } else {
+                const errorData = await response.json().catch(() => ({ message: "Failed to submit patient data. Server responded with an error." }));
+                toast({
+                    variant: "destructive",
+                    title: "Admission Failed",
+                    description: errorData.message || `Server error: ${response.status}`,
+                });
+            }
+        } catch (error) {
+            console.error("Error submitting patient data:", error);
+            toast({
+                variant: "destructive",
+                title: "Network Error",
+                description: "Could not connect to the server. Please try again later.",
+            });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
   return (
@@ -103,16 +153,19 @@ export default function AdmitPatientPage() {
                         <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                        <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
+                        <SelectItem value="Male">Male</SelectItem>
+                        <SelectItem value="Female">Female</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                 </Select>
               </div>
                <div className="space-y-2">
                 <Label htmlFor="contactNumber">Contact Number * <Phone className="inline h-3 w-3 ml-1"/></Label>
                 <Input id="contactNumber" name="contactNumber" type="tel" placeholder="e.g., 555-123-4567" required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="patientWeight">Weight (kg) *</Label>
+                <Input id="patientWeight" name="patientWeight" type="number" step="0.1" placeholder="e.g., 70.5" required />
               </div>
             </div>
              <div className="space-y-2">
@@ -124,7 +177,7 @@ export default function AdmitPatientPage() {
              <h3 className="text-lg font-semibold text-primary border-b pb-2 mb-4 pt-4">Admission Details</h3>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label htmlFor="reason">Reason for Admission *</Label>
+                    <Label htmlFor="reason">Reason for Admission (Disease) *</Label>
                     <Textarea id="reason" name="reason" placeholder="Briefly describe the reason for admission" required />
                 </div>
                 <div className="space-y-2">
@@ -160,9 +213,21 @@ export default function AdmitPatientPage() {
 
             {/* Submit Button */}
             <div className="flex justify-end pt-6">
-              <Button type="submit">
-                <UserPlus className="mr-2 h-4 w-4" />
-                Admit Patient
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? (
+                    <>
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                    </>
+                ) : (
+                    <>
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Admit Patient
+                    </>
+                )}
               </Button>
             </div>
            </form>

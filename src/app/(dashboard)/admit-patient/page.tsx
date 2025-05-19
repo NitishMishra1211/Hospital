@@ -56,7 +56,7 @@ export default function AdmitPatientPage() {
             insuranceProvider: formData.get('insuranceProvider') as string,
             policyNumber: formData.get('policyNumber') as string,
             phoneno: formData.get('contactNumber') as string,
-            disease: formData.get('reason') as string,
+            disease: formData.get('reason') as string, // 'reason' maps to 'disease'
             doctorid: formData.get('assignedDoctor') as string,
         };
 
@@ -84,12 +84,18 @@ export default function AdmitPatientPage() {
                     description: errorData.message || `Server error: ${response.status}`,
                 });
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error submitting patient data:", error);
+            let description = "Could not connect to the server. Please try again later.";
+            if (error instanceof TypeError && error.message === "Failed to fetch") {
+                description = "Network request failed. Please ensure the backend server at http://localhost:5223 is running, accessible, and CORS is configured correctly.";
+            } else if (error.message) {
+                description = `An error occurred: ${error.message}`;
+            }
             toast({
                 variant: "destructive",
-                title: "Network Error",
-                description: "Could not connect to the server. Please try again later.",
+                title: "Submission Error",
+                description: description,
             });
         } finally {
             setIsLoading(false);
@@ -164,7 +170,7 @@ export default function AdmitPatientPage() {
                 <Input id="contactNumber" name="contactNumber" type="tel" placeholder="e.g., 555-123-4567" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="patientWeight">Weight (kg) *</Label>
+                <Label htmlFor="patientWeight">Weight (kg) * <WeightIcon className="inline h-3 w-3 ml-1"/></Label>
                 <Input id="patientWeight" name="patientWeight" type="number" step="0.1" placeholder="e.g., 70.5" required />
               </div>
             </div>

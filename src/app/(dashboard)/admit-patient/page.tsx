@@ -29,8 +29,9 @@ const calculateAge = (dob: Date): number => {
 
 // Helper to generate a simple client-side ID (for pid)
 const generatePatientId = (): string => {
-    return `P${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    return `P${Math.random().toString(3).substr(2, 4).toUpperCase()}`;
 };
+
 
 
 export default function AdmitPatientPage() {
@@ -50,7 +51,7 @@ export default function AdmitPatientPage() {
             pid: generatePatientId(), // Generating client-side PID
             name: formData.get('patientName') as string,
             age: age,
-            weight: patientWeight,
+            weight: Math.round(patientWeight),
             gender: formData.get('gender') as string,
             address: formData.get('address') as string,
             insuranceProvider: formData.get('insuranceProvider') as string,
@@ -66,7 +67,7 @@ export default function AdmitPatientPage() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(patientData),
+                body: JSON.stringify( patientData),
             });
 
             if (response.ok) {

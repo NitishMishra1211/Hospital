@@ -1,7 +1,8 @@
+
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -11,37 +12,42 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/table';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Download, Search, Filter } from 'lucide-react';
-import type { Patient } from '@/lib/mock-data';
+import { Download, Search, Filter, UserCircle } from 'lucide-react';
+import type { Patient } from '@/lib/types'; // Use the new Patient type
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from '@/components/ui/badge';
 
 interface PatientTableProps {
   patients: Patient[];
 }
 
 export function PatientTable({ patients: initialPatients }: PatientTableProps) {
-  const router = useRouter(); // Initialize useRouter
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = React.useState('');
-  const [patients, setPatients] = React.useState(initialPatients);
+  const [filteredPatients, setFilteredPatients] = React.useState(initialPatients);
 
   React.useEffect(() => {
-    const filteredPatients = initialPatients.filter((patient) =>
-      patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.mobile.includes(searchTerm) ||
-      patient.doctor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.departmentCode.toLowerCase().includes(searchTerm.toLowerCase())
+    setFilteredPatients(initialPatients); // Update when initialPatients prop changes
+  }, [initialPatients]);
+
+  React.useEffect(() => {
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+    const results = initialPatients.filter((patient) =>
+      patient.name.toLowerCase().includes(lowerCaseSearchTerm) ||
+      patient.pid.toLowerCase().includes(lowerCaseSearchTerm) ||
+      patient.phoneno.includes(searchTerm) ||
+      (patient.doctorid && patient.doctorid.toLowerCase().includes(lowerCaseSearchTerm)) ||
+      (patient.disease && patient.disease.toLowerCase().includes(lowerCaseSearchTerm)) ||
+      (patient.gender && patient.gender.toLowerCase().includes(lowerCaseSearchTerm))
     );
-    setPatients(filteredPatients);
+    setFilteredPatients(results);
   }, [searchTerm, initialPatients]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
 
-  // Placeholder functions for filter and download
   const handleFilterClick = () => {
     console.log("Filter clicked");
     // Implement filter logic or open filter modal
@@ -52,11 +58,9 @@ export function PatientTable({ patients: initialPatients }: PatientTableProps) {
     // Implement download logic (e.g., generate CSV)
   };
 
-  // Function to handle row click
   const handleRowClick = (patientId: string) => {
     router.push(`/patient-details/${patientId}`);
   };
-
 
   return (
     <div className="bg-card p-4 rounded-lg shadow-md">
@@ -65,11 +69,11 @@ export function PatientTable({ patients: initialPatients }: PatientTableProps) {
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search appointments..."
+            placeholder="Search patients (Name, PID, Phone, Disease...)"
             value={searchTerm}
             onChange={handleSearchChange}
             className="pl-8 w-full"
-            aria-label="Search patient appointments"
+            aria-label="Search patient records"
           />
         </div>
         <div className="flex gap-2">
@@ -83,50 +87,46 @@ export function PatientTable({ patients: initialPatients }: PatientTableProps) {
           </Button>
          </div>
       </div>
-      <ScrollArea className="h-[400px] w-full">
+      <ScrollArea className="h-[600px] w-full"> {/* Adjusted height */}
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>PID</TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>MOB</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Doctor</TableHead>
-              <TableHead>Department</TableHead>
+              <TableHead>Age</TableHead>
+              <TableHead>Gender</TableHead>
+              <TableHead>Phone No.</TableHead>
+              <TableHead>Disease</TableHead>
+              <TableHead>Doctor ID</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {patients.length > 0 ? (
-              patients.map((patient) => (
+            {filteredPatients.length > 0 ? (
+              filteredPatients.map((patient) => (
                 <TableRow
-                  key={patient.id}
-                  onClick={() => handleRowClick(patient.id)} // Add onClick handler
-                  className="cursor-pointer hover:bg-muted/60" // Add cursor and hover effect
+                  key={patient.pid}
+                  onClick={() => handleRowClick(patient.pid)}
+                  className="cursor-pointer hover:bg-muted/60"
                 >
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={patient.avatarUrl} alt={patient.name} />
-                        <AvatarFallback>{patient.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      {patient.name}
-                    </div>
-                  </TableCell>
-                  <TableCell>{patient.mobile}</TableCell>
+                  <TableCell><Badge variant="outline">{patient.pid}</Badge></TableCell>
+                  <TableCell className="font-medium">{patient.name}</TableCell>
+                  <TableCell>{patient.age}</TableCell>
+                  <TableCell>{patient.gender}</TableCell>
+                  <TableCell>{patient.phoneno}</TableCell>
+                  <TableCell>{patient.disease}</TableCell>
+                  <TableCell>{patient.doctorid}</TableCell>
                   <TableCell>
-                    {patient.appointmentDate}
-                    <span className="text-muted-foreground text-xs block">{patient.appointmentTime}</span>
-                  </TableCell>
-                  <TableCell>{patient.doctor}</TableCell>
-                  <TableCell>
-                     {patient.department}
-                     <span className="text-muted-foreground text-xs block">{patient.departmentCode}</span>
+                    <Button variant="link" size="sm" onClick={(e) => { e.stopPropagation(); handleRowClick(patient.pid); }}>
+                      View
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="text-center h-24">
-                  No patients found.
+                <TableCell colSpan={8} className="text-center h-24"> {/* Adjusted colSpan */}
+                  No patients found matching your search.
                 </TableCell>
               </TableRow>
             )}

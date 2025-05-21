@@ -6,7 +6,7 @@ import { notFound, useParams } from 'next/navigation';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, User, Stethoscope, Phone, Home, Briefcase, StickyNote, Pill, Weight, Edit3, FileText } from 'lucide-react';
+import { CalendarDays, User, Stethoscope, Phone, Home, Briefcase, StickyNote, Pill, Weight, Edit3, FileText, UserCircle } from 'lucide-react';
 import type { Patient } from '@/lib/types'; // Use the new Patient type
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -172,3 +172,4 @@ export default function PatientDetailPage() {
 // const getInitials = (name: string) => {
 //   return name.split(' ').map(n => n[0]).join('').toUpperCase();
 // };
+

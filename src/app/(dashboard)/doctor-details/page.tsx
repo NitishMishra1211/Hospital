@@ -31,7 +31,7 @@ export default function DoctorDetailsPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch('https://5ca9-47-9-35-133.ngrok-free.app/api/Doctor');
+        const response = await fetch('https://70e2-47-9-35-133.ngrok-free.app/api/Doctor'); // Updated API endpoint
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ message: `HTTP error! status: ${response.status}` }));
           throw new Error(errorData.message || `Failed to fetch doctors. Status: ${response.status}`);
@@ -55,7 +55,7 @@ export default function DoctorDetailsPage() {
         console.error("Failed to fetch doctors:", e);
         let errorMessage = "An unexpected error occurred while fetching doctor data.";
         if (e instanceof TypeError && e.message === "Failed to fetch") {
-            errorMessage = "Cannot connect to the doctor API. Please ensure the backend server at https://5ca9-47-9-35-133.ngrok-free.app is running, accessible, and CORS is configured correctly.";
+            errorMessage = "Cannot connect to the doctor API. Please ensure the backend server at https://70e2-47-9-35-133.ngrok-free.app is running, accessible, and CORS is configured correctly.";
         } else if (e.message) {
             errorMessage = e.message;
         }

@@ -29,7 +29,7 @@ export default function HomePage() {
       setIsLoadingDoctors(true);
       setDoctorError(null);
       try {
-        const response = await fetch('https://5ca9-47-9-35-133.ngrok-free.app/api/Doctor');
+        const response = await fetch('https://70e2-47-9-35-133.ngrok-free.app/api/Doctor'); // Updated API endpoint
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ message: `HTTP error! status: ${response.status}` }));
           throw new Error(errorData.message || `Failed to fetch doctors. Status: ${response.status}`);
@@ -48,7 +48,7 @@ export default function HomePage() {
         console.error("Failed to fetch doctors for home page:", e);
         let errorMessage = "Could not load doctor information.";
          if (e instanceof TypeError && e.message === "Failed to fetch") {
-            errorMessage = "Cannot connect to the doctor API. Please ensure the backend server at https://5ca9-47-9-35-133.ngrok-free.app is running and accessible.";
+            errorMessage = "Cannot connect to the doctor API. Please ensure the backend server at https://70e2-47-9-35-133.ngrok-free.app is running and accessible.";
         } else if (e.message) {
             errorMessage = e.message;
         }

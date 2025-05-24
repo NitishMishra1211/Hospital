@@ -29,11 +29,20 @@ export default function HomePage() {
       setIsLoadingDoctors(true);
       setDoctorError(null);
       try {
-        const response = await fetch('https://70e2-47-9-35-133.ngrok-free.app/api/Doctor'); // Updated API endpoint
+        const response = await fetch('https://70e2-47-9-35-133.ngrok-free.app/api/Doctor');
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: `HTTP error! status: ${response.status}` }));
-          throw new Error(errorData.message || `Failed to fetch doctors. Status: ${response.status}`);
+          const errorText = await response.text().catch(() => `HTTP error! status: ${response.status}`);
+          console.error("API Error Response Text (Home Page):", errorText);
+          throw new Error(`Failed to fetch doctors. Status: ${response.status}. Response: ${errorText.substring(0, 200)}...`);
         }
+
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const responseText = await response.text().catch(() => "Could not read response text.");
+          console.error("API Non-JSON Response Text (Home Page):", responseText);
+          throw new Error(`Expected JSON response, but got ${contentType || 'unknown'}. Response: ${responseText.substring(0, 200)}...`);
+        }
+        
         const apiData: ApiDoctor[] = await response.json();
         const formattedDoctors: Doctor[] = apiData.map(apiDoc => ({
           id: apiDoc.id,
@@ -41,14 +50,14 @@ export default function HomePage() {
           department: apiDoc.dept,
           avatarUrl: apiDoc.avatarUrl || `https://placehold.co/80x80.png?text=${apiDoc.doctorname.charAt(0)}`,
           specialization: apiDoc.specialization || 'N/A',
-          isActive: true, // Defaulting, as API might not provide this for list
+          isActive: true, 
         }));
         setDoctors(formattedDoctors);
       } catch (e: any) {
         console.error("Failed to fetch doctors for home page:", e);
         let errorMessage = "Could not load doctor information.";
-         if (e instanceof TypeError && e.message === "Failed to fetch") {
-            errorMessage = "Cannot connect to the doctor API. Please ensure the backend server at https://70e2-47-9-35-133.ngrok-free.app is running and accessible.";
+         if (e instanceof TypeError && e.message.toLowerCase().includes("failed to fetch")) {
+            errorMessage = "Network error: Cannot connect to the doctor API. Please ensure the backend server at https://70e2-47-9-35-133.ngrok-free.app is running and accessible.";
         } else if (e.message) {
             errorMessage = e.message;
         }
@@ -94,7 +103,7 @@ export default function HomePage() {
             </h2>
              {isLoadingDoctors ? (
                 <Skeleton className="h-5 w-24" />
-             ) : (
+             ) : doctorError ? null : (
                 <p className="text-sm font-medium text-muted-foreground">Total Doctors: {doctors.length}</p>
              )}
          </div>

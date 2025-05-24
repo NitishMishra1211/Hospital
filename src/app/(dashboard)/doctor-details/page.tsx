@@ -13,8 +13,7 @@ interface ApiDoctor {
   id: string;
   doctorname: string;
   dept: string;
-  // Add other fields if your API returns more for the list view
-  avatarUrl?: string;
+  avatarUrl?: string; // Keep these optional as the API might not provide them
   specialization?: string;
   email?: string;
   phoneNumber?: string;
@@ -31,31 +30,39 @@ export default function DoctorDetailsPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch('https://70e2-47-9-35-133.ngrok-free.app/api/Doctor'); // Updated API endpoint
+        const response = await fetch('https://70e2-47-9-35-133.ngrok-free.app/api/Doctor');
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: `HTTP error! status: ${response.status}` }));
-          throw new Error(errorData.message || `Failed to fetch doctors. Status: ${response.status}`);
+          const errorText = await response.text().catch(() => `HTTP error! status: ${response.status}`);
+          console.error("API Error Response Text:", errorText);
+          throw new Error(`Failed to fetch doctors. Status: ${response.status}. Response: ${errorText.substring(0, 200)}...`);
         }
+
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const responseText = await response.text().catch(() => "Could not read response text.");
+          console.error("API Non-JSON Response Text:", responseText);
+          throw new Error(`Expected JSON response, but got ${contentType || 'unknown'}. Response: ${responseText.substring(0, 200)}...`);
+        }
+
         const apiData: ApiDoctor[] = await response.json();
 
-        // Map API data to the Doctor type used in the frontend
         const formattedDoctors: Doctor[] = apiData.map(apiDoc => ({
           id: apiDoc.id,
           name: apiDoc.doctorname,
           department: apiDoc.dept,
-          avatarUrl: apiDoc.avatarUrl || `https://placehold.co/80x80.png?text=${apiDoc.doctorname.charAt(0)}`, // Placeholder if not provided
-          specialization: apiDoc.specialization || 'N/A', // Default if not provided
+          avatarUrl: apiDoc.avatarUrl || `https://placehold.co/80x80.png?text=${apiDoc.doctorname.charAt(0)}`,
+          specialization: apiDoc.specialization || 'N/A',
           email: apiDoc.email,
           phoneNumber: apiDoc.phoneNumber,
-          isActive: apiDoc.isActive === undefined ? true : apiDoc.isActive, // Default to true
-          availableTimeSlots: [], // Assuming not available from list endpoint
+          isActive: apiDoc.isActive === undefined ? true : apiDoc.isActive,
+          availableTimeSlots: [],
         }));
         setDoctors(formattedDoctors);
       } catch (e: any) {
         console.error("Failed to fetch doctors:", e);
         let errorMessage = "An unexpected error occurred while fetching doctor data.";
-        if (e instanceof TypeError && e.message === "Failed to fetch") {
-            errorMessage = "Cannot connect to the doctor API. Please ensure the backend server at https://70e2-47-9-35-133.ngrok-free.app is running, accessible, and CORS is configured correctly.";
+        if (e instanceof TypeError && e.message.toLowerCase().includes("failed to fetch")) {
+            errorMessage = "Network error: Cannot connect to the doctor API. Please ensure the backend server at https://70e2-47-9-35-133.ngrok-free.app is running, accessible, and CORS is configured correctly.";
         } else if (e.message) {
             errorMessage = e.message;
         }

@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Stethoscope } from 'lucide-react'; // Using UserPlus as "Add Doctor" icon
+import { UserPlus, Stethoscope, Building, Mail, Phone } from 'lucide-react';
+import type { Doctor } from '@/lib/types';
 
 // Helper to generate a simple client-side ID (for doctor id)
 const generateDoctorId = (): string => {
@@ -23,51 +24,21 @@ export default function AddDoctorPage() {
         setIsLoading(true);
         const formData = new FormData(event.target as HTMLFormElement);
 
-        const doctorData = {
-            id: generateDoctorId(), // Generating client-side ID
+        const doctorData: Doctor = {
+            id: generateDoctorId(),
             name: formData.get('doctorName') as string,
             specialization: formData.get('specialization') as string,
-            avatarUrl: formData.get('avatarUrl') as string || `https://picsum.photos/seed/${formData.get('doctorName')}/80/80`, // Default placeholder if empty
+            avatarUrl: formData.get('avatarUrl') as string || `https://picsum.photos/seed/${formData.get('doctorName')}/80/80`,
+            department: formData.get('department') as string || null,
+            email: formData.get('email') as string || null,
+            phoneNumber: formData.get('phoneNumber') as string || null,
+            availableTimeSlots: [], // Defaulting to empty for new adds via this form
+            isActive: true, // Defaulting to active for new adds
         };
 
         console.log("New Doctor Data:", doctorData);
 
-        // Simulate API call
-        // try {
-        //     const response = await fetch('/api/doctors', { // Replace with your actual API endpoint
-        //         method: 'POST',
-        //         headers: {
-        //             'Content-Type': 'application/json',
-        //         },
-        //         body: JSON.stringify(doctorData),
-        //     });
-
-        //     if (response.ok) {
-        //         toast({
-        //             title: "Doctor Added Successfully",
-        //             description: `Dr. ${doctorData.name} has been added to the system.`,
-        //         });
-        //         (event.target as HTMLFormElement).reset();
-        //     } else {
-        //         const errorData = await response.json().catch(() => ({ message: "Failed to add doctor. Server responded with an error." }));
-        //         toast({
-        //             variant: "destructive",
-        //             title: "Adding Doctor Failed",
-        //             description: errorData.message || `Server error: ${response.status}`,
-        //         });
-        //     }
-        // } catch (error: any) {
-        //     console.error("Error adding doctor:", error);
-        //     toast({
-        //         variant: "destructive",
-        //         title: "Submission Error",
-        //         description: "Could not connect to the server. Please try again later.",
-        //     });
-        // } finally {
-        //     setIsLoading(false);
-        // }
-
-        // Simplified for now:
+        // Simulate API call for now
         setTimeout(() => {
              toast({
                 title: "Doctor Added (Simulated)",
@@ -87,7 +58,7 @@ export default function AddDoctorPage() {
             <CardTitle className="text-2xl font-bold">Add New Doctor</CardTitle>
           </div>
            <CardDescription className="text-muted-foreground pt-2">
-                Fill in the form below to add a new doctor to the hospital system.
+                Fill in the form below to add a new doctor to the hospital system. Fields marked with * are required.
             </CardDescription>
         </CardHeader>
         <CardContent className="p-6">
@@ -103,14 +74,24 @@ export default function AddDoctorPage() {
                 <Label htmlFor="specialization">Specialization * <Stethoscope className="inline h-3 w-3 ml-1"/></Label>
                 <Input id="specialization" name="specialization" placeholder="e.g., Cardiology" required />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="department">Department <Building className="inline h-3 w-3 ml-1"/></Label>
+                <Input id="department" name="department" placeholder="e.g., Cardiovascular Unit" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address <Mail className="inline h-3 w-3 ml-1"/></Label>
+                <Input id="email" name="email" type="email" placeholder="e.g., dr.jane@medicore.com" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phoneNumber">Phone Number <Phone className="inline h-3 w-3 ml-1"/></Label>
+                <Input id="phoneNumber" name="phoneNumber" type="tel" placeholder="e.g., +1-555-123-4567" />
+              </div>
             </div>
             <div className="space-y-2">
                 <Label htmlFor="avatarUrl">Avatar URL</Label>
                 <Input id="avatarUrl" name="avatarUrl" type="url" placeholder="e.g., https://example.com/avatar.png" />
                 <p className="text-xs text-muted-foreground">Optional. If left blank, a placeholder will be used.</p>
             </div>
-
-            {/* More fields can be added here like Department, Contact Info, etc. */}
 
             {/* Submit Button */}
             <div className="flex justify-end pt-6">

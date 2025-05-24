@@ -1,15 +1,5 @@
 
-// This file can still be used for other mock data like doctors, country codes, etc.
-// The Patient type is now primarily defined in src/lib/types.ts for API consistency.
-
-// import type { Patient as ApiPatientType } from './types'; // Example if you needed to reference it here
-
-export type Doctor = {
-  id: string;
-  name: string;
-  avatarUrl: string;
-  specialization: string;
-};
+import type { Doctor as DoctorType } from './types'; // Import the updated Doctor type
 
 export type CountryCode = {
   code: string;
@@ -17,53 +7,74 @@ export type CountryCode = {
   dial_code: string;
 };
 
-// Keeping mockDoctors for now as it's used on other pages.
-// If Doctor data also comes from an API, this would be replaced.
-export const mockDoctors: Doctor[] = [
+export const mockDoctors: DoctorType[] = [
   {
-    id: 'D001', // Matched to example doctorid from API
+    id: 'D001',
     name: 'Dr. Smith',
-    avatarUrl: 'https://picsum.photos/seed/drsmith/40/40',
+    avatarUrl: 'https://picsum.photos/seed/drsmith/80/80',
     specialization: 'Cardiology',
+    department: 'Cardiovascular Unit',
+    email: 'dr.smith@medicore.com',
+    phoneNumber: '+15551112222',
+    availableTimeSlots: ['Mon 9am-12pm', 'Wed 2pm-5pm', 'Fri 9am-11am'],
+    isActive: true,
   },
   {
     id: 'd2',
     name: 'Dr. Lee',
-    avatarUrl: 'https://picsum.photos/seed/drlee/40/40',
+    avatarUrl: 'https://picsum.photos/seed/drlee/80/80',
     specialization: 'Neurology',
+    department: 'Neurology Department',
+    email: 'dr.lee@medicore.com',
+    phoneNumber: '+15553334444',
+    availableTimeSlots: ['Tue 10am-1pm', 'Thu 3pm-6pm'],
+    isActive: true,
   },
   {
     id: 'd3',
     name: 'Dr. Green',
-    avatarUrl: 'https://picsum.photos/seed/drgreen/40/40',
+    avatarUrl: 'https://picsum.photos/seed/drgreen/80/80',
     specialization: 'Pediatrics',
+    department: 'Pediatric Care',
+    email: 'dr.green@medicore.com',
+    phoneNumber: '+15555556666',
+    availableTimeSlots: ['Mon 1pm-4pm', 'Wed 9am-12pm', 'Fri 2pm-4pm'],
+    isActive: false, // Example of an inactive doctor
   },
    {
     id: 'd4',
     name: 'Dr. Jones',
-    avatarUrl: 'https://picsum.photos/seed/drjones/40/40',
+    avatarUrl: 'https://picsum.photos/seed/drjones/80/80',
     specialization: 'Orthopedics',
+    department: 'Orthopedic Surgery',
+    email: 'dr.jones@medicore.com',
+    phoneNumber: '+15557778888',
+    availableTimeSlots: ['Tue 9am-12pm', 'Thu 1pm-4pm'],
+    isActive: true,
   },
    {
     id: 'd5',
     name: 'Dr. Taylor',
-    avatarUrl: 'https://picsum.photos/seed/drtaylor/40/40',
+    avatarUrl: 'https://picsum.photos/seed/drtaylor/80/80',
     specialization: 'Dermatology',
+    department: 'Skin & Cosmetic Clinic',
+    email: 'dr.taylor@medicore.com',
+    phoneNumber: '+15559990000',
+    availableTimeSlots: null, // Example of no specific slots listed
+    isActive: true,
   },
 ];
 
 export const mockCountryCodes: CountryCode[] = [
   { name: 'United States', code: 'US', dial_code: '+1' },
-  { name: 'Canada', code: 'CA', dial_code: '+1' }, // Note: same dial_code, unique code 'CA'
+  { name: 'Canada', code: 'CA', dial_code: '+1' },
   { name: 'United Kingdom', code: 'GB', dial_code: '+44' },
   { name: 'India', code: 'IN', dial_code: '+91' },
   { name: 'Australia', code: 'AU', dial_code: '+61' },
   { name: 'Germany', code: 'DE', dial_code: '+49' },
 ];
 
-// Old mockPatients is no longer the source of truth for patient-details page.
-// It might still be used by other components like `search-patients` or `todays-schedule`
-// until those are also updated to use API data.
+// LegacyPatient type might still be used by other components not yet updated.
 export type LegacyPatient = {
   id: string;
   name: string;
@@ -78,7 +89,7 @@ export type LegacyPatient = {
 
 export const mockPatients: LegacyPatient[] = [
   {
-    id: 'p1', // This 'id' is different from 'pid' from API
+    id: 'p1',
     name: 'Alice Johnson (Mock)',
     avatarUrl: 'https://picsum.photos/seed/alice/40/40',
     mobile: '555-1234',

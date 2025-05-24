@@ -14,11 +14,15 @@ export type Patient = {
 };
 
 export type Doctor = {
-  id: string;
-  name: string;
-  avatarUrl: string;
-  specialization: string;
-  // Add other doctor properties if needed from an API
+  id: string; // Corresponds to Id
+  name: string; // Corresponds to Name
+  avatarUrl?: string | null; // Corresponds to AvatarUrl
+  specialization: string; // Corresponds to Specialization
+  department?: string | null; // Corresponds to Department
+  email?: string | null; // Corresponds to Email
+  phoneNumber?: string | null; // Corresponds to PhoneNumber
+  availableTimeSlots?: string[] | null; // Corresponds to AvailableTimeSlots
+  isActive: boolean; // Corresponds to IsActive
 };
 
 export type CountryCode = {

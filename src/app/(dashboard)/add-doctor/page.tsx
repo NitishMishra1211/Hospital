@@ -7,13 +7,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Stethoscope, Building, Mail, Phone } from 'lucide-react';
-import type { Doctor } from '@/lib/types';
+import { UserPlus, Building } from 'lucide-react';
 
-// Helper to generate a simple client-side ID (for doctor id)
+// Helper to generate a simple client-side ID
 const generateDoctorId = (): string => {
     return `D${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
 };
+
+interface DoctorApiPayload {
+  id: string;
+  doctorname: string;
+  dept: string;
+}
 
 export default function AddDoctorPage() {
     const { toast } = useToast();
@@ -24,29 +29,52 @@ export default function AddDoctorPage() {
         setIsLoading(true);
         const formData = new FormData(event.target as HTMLFormElement);
 
-        const doctorData: Doctor = {
-            id: generateDoctorId(),
-            name: formData.get('doctorName') as string,
-            specialization: formData.get('specialization') as string,
-            avatarUrl: formData.get('avatarUrl') as string || `https://picsum.photos/seed/${formData.get('doctorName')}/80/80`,
-            department: formData.get('department') as string || null,
-            email: formData.get('email') as string || null,
-            phoneNumber: formData.get('phoneNumber') as string || null,
-            availableTimeSlots: [], // Defaulting to empty for new adds via this form
-            isActive: true, // Defaulting to active for new adds
+        const doctorData: DoctorApiPayload = {
+            id: generateDoctorId(), // Client-side ID generation
+            doctorname: formData.get('doctorName') as string,
+            dept: formData.get('department') as string,
         };
 
-        console.log("New Doctor Data:", doctorData);
-
-        // Simulate API call for now
-        setTimeout(() => {
-             toast({
-                title: "Doctor Added (Simulated)",
-                description: `Dr. ${doctorData.name} (${doctorData.specialization}) data logged to console.`,
+        try {
+            const response = await fetch('http://localhost:5223/api/Doctor', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(doctorData),
             });
-            (event.target as HTMLFormElement).reset();
+
+            if (response.ok) {
+                toast({
+                    title: "Doctor Added Successfully",
+                    description: `Dr. ${doctorData.doctorname} has been added to the system.`,
+                });
+                (event.target as HTMLFormElement).reset();
+            } else {
+                const errorData = await response.json().catch(() => ({ message: "Failed to add doctor. Server responded with an error." }));
+                console.error("API Error Data:", errorData);
+                toast({
+                    variant: "destructive",
+                    title: "Adding Doctor Failed",
+                    description: errorData.message || `Server error: ${response.status} ${response.statusText}`,
+                });
+            }
+        } catch (error: any) {
+            console.error("Error submitting doctor data:", error);
+            let description = "Could not connect to the server. Please try again later.";
+            if (error instanceof TypeError && error.message === "Failed to fetch") {
+                description = "Network request failed. Please ensure the backend server at http://localhost:5223 is running, accessible, and CORS is configured correctly.";
+            } else if (error.message) {
+                description = `An error occurred: ${error.message}`;
+            }
+            toast({
+                variant: "destructive",
+                title: "Submission Error",
+                description: description,
+            });
+        } finally {
             setIsLoading(false);
-        }, 1000);
+        }
     };
 
   return (
@@ -63,7 +91,6 @@ export default function AddDoctorPage() {
         </CardHeader>
         <CardContent className="p-6">
            <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Doctor Information */}
             <h3 className="text-lg font-semibold text-primary border-b pb-2 mb-4">Doctor Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -71,26 +98,9 @@ export default function AddDoctorPage() {
                 <Input id="doctorName" name="doctorName" placeholder="e.g., Dr. Jane Smith" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="specialization">Specialization * <Stethoscope className="inline h-3 w-3 ml-1"/></Label>
-                <Input id="specialization" name="specialization" placeholder="e.g., Cardiology" required />
+                <Label htmlFor="department">Department * <Building className="inline h-3 w-3 ml-1"/></Label>
+                <Input id="department" name="department" placeholder="e.g., Cardiovascular Unit" required/>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="department">Department <Building className="inline h-3 w-3 ml-1"/></Label>
-                <Input id="department" name="department" placeholder="e.g., Cardiovascular Unit" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address <Mail className="inline h-3 w-3 ml-1"/></Label>
-                <Input id="email" name="email" type="email" placeholder="e.g., dr.jane@medicore.com" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phoneNumber">Phone Number <Phone className="inline h-3 w-3 ml-1"/></Label>
-                <Input id="phoneNumber" name="phoneNumber" type="tel" placeholder="e.g., +1-555-123-4567" />
-              </div>
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="avatarUrl">Avatar URL</Label>
-                <Input id="avatarUrl" name="avatarUrl" type="url" placeholder="e.g., https://example.com/avatar.png" />
-                <p className="text-xs text-muted-foreground">Optional. If left blank, a placeholder will be used.</p>
             </div>
 
             {/* Submit Button */}

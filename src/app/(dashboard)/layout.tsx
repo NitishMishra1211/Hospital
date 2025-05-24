@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -30,6 +31,7 @@ import {
   Search,
   CalendarDays,
   Megaphone,
+  Briefcase, // Example for "Add Doctor", could be UserPlus as well
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -37,8 +39,9 @@ import { Badge } from '@/components/ui/badge';
 const navItems = [
   { name: 'Home', icon: Home, href: '/' },
   { name: 'Patient Details', icon: User, href: '/patient-details' },
-  { name: 'Doctor Details', icon: Users, href: '/doctor-details' },
   { name: 'Admit Patient', icon: UserPlus, href: '/admit-patient' },
+  { name: 'Doctor Details', icon: Users, href: '/doctor-details' },
+  { name: 'Add Doctor', icon: Briefcase, href: '/add-doctor' }, // Added Add Doctor link
   { name: 'ER Status', icon: Ambulance, href: '/emergency-status' },
   { name: 'Pharmacy', icon: FlaskConical, href: '/pharmacy-details' },
   { name: 'Search Patients', icon: Search, href: '/search-patients' },
@@ -46,7 +49,7 @@ const navItems = [
   { name: 'Announcements', icon: Megaphone, href: '/announcements' },
   { name: 'Payment Details', icon: CreditCard, href: '/payment-details' },
   { name: 'E-Channeling', icon: PhoneCall, href: '/e-channeling' },
-  { name: 'Settings', icon: Settings, href: '/settings' }, // Added Settings link
+  { name: 'Settings', icon: Settings, href: '/settings' },
 ];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {

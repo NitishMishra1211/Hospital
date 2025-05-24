@@ -13,16 +13,19 @@ export type Patient = {
   doctorid: string;
 };
 
+// Updated Doctor type to align with the API response for GET all,
+// mapping doctorname -> name and dept -> department,
+// and making other fields optional.
 export type Doctor = {
-  id: string; // Corresponds to Id
-  name: string; // Corresponds to Name
-  avatarUrl?: string | null; // Corresponds to AvatarUrl
-  specialization: string; // Corresponds to Specialization
-  department?: string | null; // Corresponds to Department
-  email?: string | null; // Corresponds to Email
-  phoneNumber?: string | null; // Corresponds to PhoneNumber
-  availableTimeSlots?: string[] | null; // Corresponds to AvailableTimeSlots
-  isActive: boolean; // Corresponds to IsActive
+  id: string;
+  name: string; // Mapped from doctorname if that's what the API returns
+  department: string; // Mapped from dept if that's what the API returns
+  avatarUrl?: string | null;
+  specialization?: string | null;
+  email?: string | null;
+  phoneNumber?: string | null;
+  availableTimeSlots?: string[] | null;
+  isActive?: boolean; // Default to true if not provided by API
 };
 
 export type CountryCode = {

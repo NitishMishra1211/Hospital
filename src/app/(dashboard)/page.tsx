@@ -1,12 +1,64 @@
 
-import { DoctorGrid } from '@/components/dashboard/doctor-grid'; // Use DoctorGrid for attractive display
+'use client';
+
+import * as React from 'react';
+import { DoctorGrid } from '@/components/dashboard/doctor-grid';
 import { ActionCard } from '@/components/dashboard/action-card';
-import { mockDoctors } from '@/lib/mock-data';
+import type { Doctor } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Users } from 'lucide-react'; // Keep Users icon
+import { Users, Search } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
+
+interface ApiDoctor {
+  id: string;
+  doctorname: string;
+  dept: string;
+  avatarUrl?: string;
+  specialization?: string;
+}
 
 export default function HomePage() {
-  const totalDoctors = mockDoctors.length;
+  const [doctors, setDoctors] = React.useState<Doctor[]>([]);
+  const [isLoadingDoctors, setIsLoadingDoctors] = React.useState(true);
+  const [doctorError, setDoctorError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    async function fetchDoctors() {
+      setIsLoadingDoctors(true);
+      setDoctorError(null);
+      try {
+        const response = await fetch('https://5ca9-47-9-35-133.ngrok-free.app/api/Doctor');
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: `HTTP error! status: ${response.status}` }));
+          throw new Error(errorData.message || `Failed to fetch doctors. Status: ${response.status}`);
+        }
+        const apiData: ApiDoctor[] = await response.json();
+        const formattedDoctors: Doctor[] = apiData.map(apiDoc => ({
+          id: apiDoc.id,
+          name: apiDoc.doctorname,
+          department: apiDoc.dept,
+          avatarUrl: apiDoc.avatarUrl || `https://placehold.co/80x80.png?text=${apiDoc.doctorname.charAt(0)}`,
+          specialization: apiDoc.specialization || 'N/A',
+          isActive: true, // Defaulting, as API might not provide this for list
+        }));
+        setDoctors(formattedDoctors);
+      } catch (e: any) {
+        console.error("Failed to fetch doctors for home page:", e);
+        let errorMessage = "Could not load doctor information.";
+         if (e instanceof TypeError && e.message === "Failed to fetch") {
+            errorMessage = "Cannot connect to the doctor API. Please ensure the backend server at https://5ca9-47-9-35-133.ngrok-free.app is running and accessible.";
+        } else if (e.message) {
+            errorMessage = e.message;
+        }
+        setDoctorError(errorMessage);
+      } finally {
+        setIsLoadingDoctors(false);
+      }
+    }
+    fetchDoctors();
+  }, []);
 
   return (
     <div className="space-y-6 lg:space-y-8">
@@ -40,11 +92,40 @@ export default function HomePage() {
             <h2 className="text-xl font-semibold text-muted-foreground flex items-center gap-2">
                 <Users className="h-5 w-5"/> Our Doctors
             </h2>
-             <p className="text-sm font-medium text-muted-foreground">Total Doctors: {totalDoctors}</p>
+             {isLoadingDoctors ? (
+                <Skeleton className="h-5 w-24" />
+             ) : (
+                <p className="text-sm font-medium text-muted-foreground">Total Doctors: {doctors.length}</p>
+             )}
          </div>
-        <DoctorGrid doctors={mockDoctors} />
+        {isLoadingDoctors ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
+                {[...Array(4)].map((_, i) => (
+                     <Card key={i} className="shadow-md rounded-lg">
+                        <CardContent className="p-4 flex flex-col items-center text-center flex-grow space-y-2">
+                            <Skeleton className="h-20 w-20 rounded-full" />
+                            <Skeleton className="h-5 w-3/4" />
+                            <Skeleton className="h-4 w-1/2" />
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+        ) : doctorError ? (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Error Loading Doctors</AlertTitle>
+              <AlertDescription>{doctorError}</AlertDescription>
+            </Alert>
+        ) : doctors.length > 0 ? (
+            <DoctorGrid doctors={doctors} />
+        ) : (
+            <Card>
+                <CardContent className="p-6 text-center text-muted-foreground">
+                    No doctors available at this time.
+                </CardContent>
+            </Card>
+        )}
       </div>
-
     </div>
   );
 }

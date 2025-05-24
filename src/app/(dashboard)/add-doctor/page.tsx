@@ -36,7 +36,7 @@ export default function AddDoctorPage() {
         };
 
         try {
-            const response = await fetch('http://localhost:5223/api/Doctor', {
+            const response = await fetch('https://5ca9-47-9-35-133.ngrok-free.app/api/Doctor', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -63,7 +63,7 @@ export default function AddDoctorPage() {
             console.error("Error submitting doctor data:", error);
             let description = "Could not connect to the server. Please try again later.";
             if (error instanceof TypeError && error.message === "Failed to fetch") {
-                description = "Network request failed. Please ensure the backend server at http://localhost:5223 is running, accessible, and CORS is configured correctly.";
+                description = "Network request failed. Please ensure the backend server at https://5ca9-47-9-35-133.ngrok-free.app is running, accessible, and CORS is configured correctly.";
             } else if (error.message) {
                 description = `An error occurred: ${error.message}`;
             }

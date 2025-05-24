@@ -43,7 +43,11 @@ export default function DoctorDetailPage() {
       setError(null);
       try {
         // Assuming your API for a single doctor is /api/Doctor/{id}
-        const response = await fetch(`https://5ca9-47-9-35-133.ngrok-free.app/api/Doctor/${doctorId}`);
+        const response = await fetch(`https://5ca9-47-9-35-133.ngrok-free.app/api/Doctor/${doctorId}`, {
+          headers: {
+            'ngrok-skip-browser-warning': 'true', // Added header
+          },
+        });
         if (response.status === 404) {
           notFound();
           return;

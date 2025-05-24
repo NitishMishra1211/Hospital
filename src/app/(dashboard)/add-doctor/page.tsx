@@ -40,6 +40,7 @@ export default function AddDoctorPage() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true', // Added header
                 },
                 body: JSON.stringify(doctorData),
             });

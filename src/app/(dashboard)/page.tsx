@@ -29,7 +29,11 @@ export default function HomePage() {
       setIsLoadingDoctors(true);
       setDoctorError(null);
       try {
-        const response = await fetch('https://70e2-47-9-35-133.ngrok-free.app/api/Doctor');
+        const response = await fetch('https://70e2-47-9-35-133.ngrok-free.app/api/Doctor', {
+          headers: {
+            'ngrok-skip-browser-warning': 'true', // Added header
+          },
+        });
         if (!response.ok) {
           const errorText = await response.text().catch(() => `HTTP error! status: ${response.status}`);
           console.error("API Error Response Text (Home Page):", errorText);

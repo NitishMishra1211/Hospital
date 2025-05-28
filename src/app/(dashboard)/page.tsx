@@ -31,7 +31,7 @@ export default function HomePage() {
       try {
         const response = await fetch('https://70e2-47-9-35-133.ngrok-free.app/api/Doctor', {
           headers: {
-            'ngrok-skip-browser-warning': 'true', // Added header
+            'ngrok-skip-browser-warning': 'true',
           },
         });
         if (!response.ok) {
@@ -55,15 +55,21 @@ export default function HomePage() {
           avatarUrl: apiDoc.avatarUrl || `https://placehold.co/80x80.png?text=${apiDoc.doctorname.charAt(0)}`,
           specialization: apiDoc.specialization || 'N/A',
           isActive: true, 
+          email: null,
+          phoneNumber: null,
+          availableTimeSlots: null,
         }));
         setDoctors(formattedDoctors);
       } catch (e: any) {
         console.error("Failed to fetch doctors for home page:", e);
-        let errorMessage = "Could not load doctor information.";
-         if (e instanceof TypeError && e.message.toLowerCase().includes("failed to fetch")) {
-            errorMessage = "Network error: Cannot connect to the doctor API. Please ensure the backend server at https://70e2-47-9-35-133.ngrok-free.app is running and accessible.";
+        let errorMessage = "An unexpected error occurred while trying to load doctor information.";
+        if (e instanceof TypeError && e.message.toLowerCase().includes("failed to fetch")) {
+            errorMessage = `Network error: Unable to connect to the doctor API at https://70e2-47-9-35-133.ngrok-free.app. Please ensure: 
+1. Your backend server (e.g., ASP.NET Core) is running.
+2. The ngrok tunnel ('https://70e2-47-9-35-133.ngrok-free.app') is active and correctly pointing to your backend.
+3. Your backend API allows requests from this application (CORS configuration).`;
         } else if (e.message) {
-            errorMessage = e.message;
+            errorMessage = `Could not load doctor information: ${e.message}`;
         }
         setDoctorError(errorMessage);
       } finally {

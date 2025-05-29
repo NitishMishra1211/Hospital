@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Settings, UserCircle, Lock, Palette, Bell, Phone, LogOut } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { mockCountryCodes, CountryCode } from '@/lib/mock-data'; // Ensure this path is correct
+import { mockCountryCodes, CountryCode } from '@/lib/mock-data';
 
 
 interface CurrentUserData {
@@ -96,6 +96,7 @@ export default function SettingsPage() {
         password: false,
         preferences: false,
         otp: false,
+        logout: false, // Added logout loading state
     });
 
     React.useEffect(() => {
@@ -107,9 +108,9 @@ export default function SettingsPage() {
             const updatedCurrentUser = {
                 name: parsedUser.username || 'Admin User',
                 email: parsedUser.email || 'admin@medicore.com',
-                avatarUrl: `https://placehold.co/80x80.png?text=${(parsedUser.username || 'AU').charAt(0)}`, // Placeholder avatar based on username
-                phone: currentUser.phone, // Keep existing or could be from API if available
-                role: parsedUser.role || 'User', // Role from API or default
+                avatarUrl: `https://placehold.co/80x80.png?text=${(parsedUser.username || 'AU').charAt(0)}`,
+                phone: currentUser.phone, 
+                role: parsedUser.role || 'User', 
             };
             setCurrentUser(updatedCurrentUser);
             setProfileName(updatedCurrentUser.name);
@@ -128,10 +129,10 @@ export default function SettingsPage() {
         }
       }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Run once on mount
+    }, []);
 
 
-    const handleProfileUpdate = (event: React.FormEvent<HTMLFormElement>) => {
+    const handleProfileUpdate = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setIsLoading(prev => ({...prev, profile: true}));
         const selectedCountry = mockCountryCodes.find(c => c.code === profileSelectedCountryCode);
@@ -141,20 +142,32 @@ export default function SettingsPage() {
         const profileData = {
             name: profileName,
             phone: fullProfilePhoneNumber,
+            // Include other relevant profile fields if your API supports them
         };
-        console.log("Profile Update Data (to be sent to API):", profileData);
-        // Replace with actual API call:
-        // fetch('/api/user/profile', { method: 'PUT', body: JSON.stringify(profileData), headers: {'Content-Type': 'application/json'} })
-        // .then(res => res.json()).then(data => { ... })
-        // .catch(err => { ... })
-        // .finally(() => setIsLoading(prev => ({...prev, profile: false})));
-        setTimeout(() => { // Simulate API call
-            toast({ title: "Profile Update Simulated", description: "Profile data logged. Integrate with your API." });
+        
+        try {
+            // Replace with your actual API endpoint for updating profile
+            const response = await fetch('/api/user/profile', { 
+                method: 'PUT', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(profileData) 
+            });
+
+            if (response.ok) {
+                toast({ title: "Profile Updated", description: "Your profile has been successfully updated." });
+                // Optionally, refetch user data or update currentUser state if API returns new data
+            } else {
+                const errorData = await response.json().catch(() => ({ message: "Failed to update profile. Server error."}));
+                toast({ variant: "destructive", title: "Update Failed", description: errorData.message });
+            }
+        } catch (error) {
+            toast({ variant: "destructive", title: "Network Error", description: "Could not connect to update profile." });
+        } finally {
             setIsLoading(prev => ({...prev, profile: false}));
-        }, 1000);
+        }
     };
 
-    const handlePasswordChange = (event: React.FormEvent<HTMLFormElement>) => {
+    const handlePasswordChange = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (newPassword !== confirmPassword) {
             toast({ variant: "destructive", title: "Password Mismatch", description: "New password and confirmation do not match." });
@@ -166,27 +179,55 @@ export default function SettingsPage() {
         }
         setIsLoading(prev => ({...prev, password: true}));
         const passwordData = { currentPassword, newPassword };
-        console.log("Password Change Data (to be sent to API):", passwordData);
-        // Replace with actual API call
-        setTimeout(() => { // Simulate API call
-            toast({ title: "Password Change Simulated", description: "Password change logged. Integrate with your API." });
-            setCurrentPassword('');
-            setNewPassword('');
-            setConfirmPassword('');
+        
+        try {
+            // Replace with your actual API endpoint for changing password
+            const response = await fetch('/api/auth/change-password', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(passwordData) 
+            });
+
+            if (response.ok) {
+                toast({ title: "Password Changed", description: "Your password has been successfully changed." });
+                setCurrentPassword('');
+                setNewPassword('');
+                setConfirmPassword('');
+            } else {
+                const errorData = await response.json().catch(() => ({ message: "Failed to change password. Server error."}));
+                toast({ variant: "destructive", title: "Change Failed", description: errorData.message });
+            }
+        } catch (error) {
+            toast({ variant: "destructive", title: "Network Error", description: "Could not connect to change password service." });
+        } finally {
             setIsLoading(prev => ({...prev, password: false}));
-        }, 1000);
+        }
     };
 
-    const handlePreferencesUpdate = (event: React.FormEvent<HTMLFormElement>) => {
+    const handlePreferencesUpdate = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setIsLoading(prev => ({...prev, preferences: true}));
         const preferencesData = { theme, emailNotifications, smsNotifications };
-        console.log("Preferences Update Data (to be sent to API):", preferencesData);
-        // Replace with actual API call
-        setTimeout(() => { // Simulate API call
-            toast({ title: "Preferences Update Simulated", description: "Preferences data logged. Integrate with your API." });
+        
+        try {
+            // Replace with your actual API endpoint for updating preferences
+            const response = await fetch('/api/user/preferences', { 
+                method: 'PUT', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(preferencesData) 
+            });
+
+            if (response.ok) {
+                toast({ title: "Preferences Updated", description: "Your preferences have been saved." });
+            } else {
+                const errorData = await response.json().catch(() => ({ message: "Failed to save preferences. Server error."}));
+                toast({ variant: "destructive", title: "Update Failed", description: errorData.message });
+            }
+        } catch (error) {
+            toast({ variant: "destructive", title: "Network Error", description: "Could not connect to save preferences." });
+        } finally {
             setIsLoading(prev => ({...prev, preferences: false}));
-        }, 1000);
+        }
     };
 
     const handleSendOtp = async () => {
@@ -200,7 +241,7 @@ export default function SettingsPage() {
         }
         setIsLoading(prev => ({...prev, otp: true}));
         try {
-            const response = await fetch('/api/send-otp', {
+            const response = await fetch('/api/send-otp', { // This API route already exists conceptually
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ phoneNumber: fullOtpPhoneNumber }),
@@ -219,7 +260,7 @@ export default function SettingsPage() {
         }
     };
 
-    const handleVerifyOtp = () => {
+    const handleVerifyOtp = async () => {
         if (!otp.trim()) {
             toast({ variant: "destructive", title: "OTP Required", description: "Please enter the OTP." });
             return;
@@ -229,26 +270,57 @@ export default function SettingsPage() {
         const dialCode = selectedOtpCountry ? selectedOtpCountry.dial_code : '';
         const fullOtpPhoneNumber = `${dialCode}${otpLocalPhoneNumber}`;
         
-        console.log("Verify OTP Data (to be sent to API):", { phoneNumber: fullOtpPhoneNumber, otp });
-        // Replace with actual API call to /api/verify-otp
-        setTimeout(() => { // Simulate API call
-            if (otp === "123456") { 
-                 toast({ title: "Phone Verified (Simulated)", description: "Phone number verified successfully." });
+        try {
+            // Replace with your actual API endpoint for verifying OTP
+            const response = await fetch('/api/auth/verify-otp', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phoneNumber: fullOtpPhoneNumber, otp }) 
+            });
+
+            if (response.ok) {
+                 toast({ title: "Phone Verified", description: "Your phone number has been verified." });
                  setOtpSent(false);
                  setOtp('');
+                 // Update user profile state or refetch if phone is now verified
             } else {
-                 toast({ variant: "destructive", title: "Invalid OTP (Simulated)", description: "The OTP entered is incorrect." });
+                 const errorData = await response.json().catch(() => ({ message: "Invalid OTP or server error."}));
+                 toast({ variant: "destructive", title: "Verification Failed", description: errorData.message });
             }
+        } catch (error) {
+            toast({ variant: "destructive", title: "Network Error", description: "Could not connect to OTP verification service." });
+        } finally {
             setIsLoading(prev => ({...prev, otp: false}));
-        }, 1000);
+        }
     };
 
-    const handleLogout = () => {
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('loggedInUser');
+    const handleLogout = async () => {
+        setIsLoading(prev => ({ ...prev, logout: true }));
+        try {
+            // Conceptual API call to backend to invalidate session/token
+            const response = await fetch('http://localhost:5223/api/Users/logout', { // Placeholder API
+                method: 'POST', // Or GET, depending on your API design
+                headers: {
+                    // Include auth token if needed, e.g., 'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.ok) {
+                console.log("Server logout successful");
+            } else {
+                // Log error but proceed with client-side logout
+                console.error("Server logout failed or API not implemented", await response.text().catch(() => ""));
+            }
+        } catch (error) {
+            // Log error but proceed with client-side logout
+            console.error("Error during server logout attempt:", error);
+        } finally {
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('loggedInUser');
+            }
+            toast({ title: "Logged Out", description: "You have been successfully logged out." });
+            router.push('/login');
+            // No need to set isLoading.logout to false as we are navigating away
         }
-        toast({ title: "Logged Out", description: "You have been successfully logged out." });
-        router.push('/login');
     };
     
     const avatarFallback = currentUser.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'AU';
@@ -261,9 +333,21 @@ export default function SettingsPage() {
             <Settings className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold">User Settings</h1>
         </div>
-        <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
+        <Button variant="outline" onClick={handleLogout} disabled={isLoading.logout}>
+            {isLoading.logout ? (
+                <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Logging out...
+                </>
+            ) : (
+                <>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                </>
+            )}
         </Button>
       </div>
 
@@ -498,4 +582,6 @@ export default function SettingsPage() {
     </div>
   );
 }
+    
+
     

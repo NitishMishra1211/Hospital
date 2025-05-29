@@ -2,33 +2,46 @@
 'use client';
 
 import * as React from 'react';
-import { notFound, useParams } from 'next/navigation';
-import Link from 'next/link'; // Import Link
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { notFound, useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { CalendarDays, User, Stethoscope, Phone, Home, Briefcase, StickyNote, Pill, Weight, Edit3, FileText, UserCircle } from 'lucide-react';
-import type { Patient } from '@/lib/types'; // Use the new Patient type
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button'; 
+import { User, Stethoscope, Phone, Home as HomeIcon, Briefcase, Pill, Weight, Edit3, FileText, UserCircle, AlertTriangle, Trash2 } from 'lucide-react';
+import type { Patient } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 export default function PatientDetailPage() {
   const params = useParams();
+  const router = useRouter();
+  const { toast } = useToast();
   const patientId = params.id as string;
 
   const [patient, setPatient] = React.useState<Patient | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isDischarging, setIsDischarging] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (!patientId) return;
 
     async function fetchPatientDetail() {
+      setIsLoading(true);
+      setError(null);
       try {
-        setIsLoading(true);
-        setError(null);
         const response = await fetch(`http://localhost:5223/api/Patients/${patientId}`);
         if (response.status === 404) {
           notFound();
@@ -42,11 +55,11 @@ export default function PatientDetailPage() {
         setPatient(data);
       } catch (e: any) {
         console.error("Failed to fetch patient details:", e);
-         let errorMessage = "An unexpected error occurred while fetching patient data.";
+        let errorMessage = "An unexpected error occurred while fetching patient data.";
         if (e instanceof TypeError && e.message === "Failed to fetch") {
-            errorMessage = "Cannot connect to the patient API. Please ensure the backend server at http://localhost:5223 is running and accessible, and CORS is configured correctly.";
+          errorMessage = "Cannot connect to the patient API. Please ensure the backend server at http://localhost:5223 is running and accessible, and CORS is configured correctly.";
         } else if (e.message) {
-            errorMessage = e.message;
+          errorMessage = e.message;
         }
         setError(errorMessage);
       } finally {
@@ -55,6 +68,43 @@ export default function PatientDetailPage() {
     }
     fetchPatientDetail();
   }, [patientId]);
+
+  const handleDischargePatient = async () => {
+    if (!patient) return;
+    setIsDischarging(true);
+    try {
+      const response = await fetch(`http://localhost:5223/api/Patients/${patient.pid}`, {
+        method: 'DELETE',
+        headers: {
+          // Add any necessary headers, like Authorization if required
+        },
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Patient Discharged Successfully",
+          description: `${patient.name} has been discharged.`,
+        });
+        router.push('/patient-details'); // Redirect to patient list
+      } else {
+        const errorData = await response.json().catch(() => ({ message: "Failed to discharge patient. Server responded with an error." }));
+        toast({
+          variant: "destructive",
+          title: "Discharge Failed",
+          description: errorData.message || `Server error: ${response.status}`,
+        });
+      }
+    } catch (error: any) {
+      console.error("Error discharging patient:", error);
+      toast({
+        variant: "destructive",
+        title: "Discharge Error",
+        description: error.message || "Could not connect to the server. Please try again later.",
+      });
+    } finally {
+      setIsDischarging(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -78,7 +128,7 @@ export default function PatientDetailPage() {
   }
 
   if (error) {
-     return (
+    return (
       <div className="space-y-6 lg:space-y-8">
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
@@ -91,9 +141,9 @@ export default function PatientDetailPage() {
 
   if (!patient) {
     return (
-         <div className="space-y-6 lg:space-y-8 text-center">
-             <p className="text-muted-foreground">Patient data not available or an error occurred.</p>
-         </div>
+      <div className="space-y-6 lg:space-y-8 text-center">
+        <p className="text-muted-foreground">Patient data not available or an error occurred.</p>
+      </div>
     );
   }
 
@@ -118,30 +168,30 @@ export default function PatientDetailPage() {
         <CardContent className="p-6 space-y-6">
           <div>
             <h3 className="text-lg font-semibold text-primary mb-3 border-b pb-2 flex items-center gap-2">
-                <UserCircle className="h-5 w-5"/> Demographics & Contact
+              <UserCircle className="h-5 w-5" /> Demographics & Contact
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
               <p><strong className="font-medium">Age:</strong> {patient.age}</p>
               <p><strong className="font-medium">Gender:</strong> {patient.gender}</p>
               <p><strong className="font-medium">Weight:</strong> {patient.weight} kg</p>
-              <p className="flex items-center gap-1"><Phone className="h-4 w-4 text-muted-foreground"/> <strong className="font-medium">Phone:</strong> {patient.phoneno}</p>
-              <p className="md:col-span-2 flex items-start gap-1"><Home className="h-4 w-4 text-muted-foreground mt-0.5"/> <strong className="font-medium">Address:</strong> {patient.address || 'N/A'}</p>
+              <p className="flex items-center gap-1"><Phone className="h-4 w-4 text-muted-foreground" /> <strong className="font-medium">Phone:</strong> {patient.phoneno}</p>
+              <p className="md:col-span-2 flex items-start gap-1"><HomeIcon className="h-4 w-4 text-muted-foreground mt-0.5" /> <strong className="font-medium">Address:</strong> {patient.address || 'N/A'}</p>
             </div>
           </div>
 
           <div>
             <h3 className="text-lg font-semibold text-primary mb-3 border-b pb-2 flex items-center gap-2 pt-4">
-                <Pill className="h-5 w-5"/> Medical Information
+              <Pill className="h-5 w-5" /> Medical Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
               <p><strong className="font-medium">Primary Concern/Disease:</strong> {patient.disease}</p>
-              <p className="flex items-center gap-1"><Stethoscope className="h-4 w-4 text-muted-foreground"/> <strong className="font-medium">Assigned Doctor ID:</strong> {patient.doctorid}</p>
+              <p className="flex items-center gap-1"><Stethoscope className="h-4 w-4 text-muted-foreground" /> <strong className="font-medium">Assigned Doctor ID:</strong> {patient.doctorid}</p>
             </div>
           </div>
 
           <div>
             <h3 className="text-lg font-semibold text-primary mb-3 border-b pb-2 flex items-center gap-2 pt-4">
-                <Briefcase className="h-5 w-5"/> Insurance Details
+              <Briefcase className="h-5 w-5" /> Insurance Details
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
               <p><strong className="font-medium">Provider:</strong> {patient.insuranceProvider || 'N/A'}</p>
@@ -149,24 +199,46 @@ export default function PatientDetailPage() {
             </div>
           </div>
 
-           <div className="border-t pt-6 mt-6">
+          <div className="border-t pt-6 mt-6">
             <h3 className="text-lg font-semibold text-primary mb-3">Actions</h3>
             <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" asChild>
-                    <Link href={`/patient-details/${patient.pid}/edit`}>
-                        <Edit3 className="mr-2 h-4 w-4"/> Edit Patient Info
-                    </Link>
-                </Button>
-                <Button variant="outline" size="sm" asChild>
-                  <Link href={`/patient-medical-history/${patient.pid}`}>
-                    <FileText className="mr-2 h-4 w-4"/> View Medical History
-                  </Link>
-                </Button>
-                <Button variant="destructive" size="sm">Discharge Patient</Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/patient-details/${patient.pid}/edit`}>
+                  <Edit3 className="mr-2 h-4 w-4" /> Edit Patient Info
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/patient-medical-history/${patient.pid}`}>
+                  <FileText className="mr-2 h-4 w-4" /> View Medical History
+                </Link>
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" disabled={isDischarging}>
+                    <Trash2 className="mr-2 h-4 w-4" /> {isDischarging ? "Discharging..." : "Discharge Patient"}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action will discharge the patient "{patient.name}". This process cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDischargePatient} disabled={isDischarging}>
+                      {isDischarging ? "Processing..." : "Discharge"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
-           </div>
+          </div>
         </CardContent>
       </Card>
     </div>
   );
 }
+
+    

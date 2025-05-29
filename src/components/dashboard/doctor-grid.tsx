@@ -1,5 +1,5 @@
 
-import type { Doctor } from '@/lib/mock-data';
+import type { Doctor } from '@/lib/types'; // Corrected import path
 import { DoctorCard } from './doctor-card'; // Import the DoctorCard component
 
 interface DoctorGridProps {

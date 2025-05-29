@@ -3,6 +3,7 @@
 
 import * as React from 'react';
 import { notFound, useParams } from 'next/navigation';
+import Link from 'next/link'; // Import Link
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +12,7 @@ import type { Patient } from '@/lib/types'; // Use the new Patient type
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button'; // Import Button
+import { Button } from '@/components/ui/button'; 
 
 export default function PatientDetailPage() {
   const params = useParams();
@@ -89,7 +90,6 @@ export default function PatientDetailPage() {
   }
 
   if (!patient) {
-    // This case should ideally be handled by notFound() if API returns 404
     return (
          <div className="space-y-6 lg:space-y-8 text-center">
              <p className="text-muted-foreground">Patient data not available or an error occurred.</p>
@@ -103,7 +103,6 @@ export default function PatientDetailPage() {
         <CardHeader className="bg-primary/10 p-6">
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <Avatar className="h-20 w-20 border-2 border-primary">
-              {/* API doesn't provide avatar, using fallback */}
               <AvatarFallback className="text-2xl bg-muted text-primary">
                 {patient.name.split(' ').map(n => n[0]).join('').toUpperCase()}
               </AvatarFallback>
@@ -117,7 +116,6 @@ export default function PatientDetailPage() {
           </div>
         </CardHeader>
         <CardContent className="p-6 space-y-6">
-          {/* Patient Demographics */}
           <div>
             <h3 className="text-lg font-semibold text-primary mb-3 border-b pb-2 flex items-center gap-2">
                 <UserCircle className="h-5 w-5"/> Demographics & Contact
@@ -131,7 +129,6 @@ export default function PatientDetailPage() {
             </div>
           </div>
 
-          {/* Medical Information */}
           <div>
             <h3 className="text-lg font-semibold text-primary mb-3 border-b pb-2 flex items-center gap-2 pt-4">
                 <Pill className="h-5 w-5"/> Medical Information
@@ -142,7 +139,6 @@ export default function PatientDetailPage() {
             </div>
           </div>
 
-          {/* Insurance Information */}
           <div>
             <h3 className="text-lg font-semibold text-primary mb-3 border-b pb-2 flex items-center gap-2 pt-4">
                 <Briefcase className="h-5 w-5"/> Insurance Details
@@ -153,12 +149,15 @@ export default function PatientDetailPage() {
             </div>
           </div>
 
-          {/* Placeholder for Actions (if needed) */}
            <div className="border-t pt-6 mt-6">
             <h3 className="text-lg font-semibold text-primary mb-3">Actions</h3>
             <div className="flex flex-wrap gap-2">
                 <Button variant="outline" size="sm"><Edit3 className="mr-2 h-4 w-4"/> Edit Patient Info</Button>
-                <Button variant="outline" size="sm"><FileText className="mr-2 h-4 w-4"/> View Medical History</Button>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={`/patient-medical-history/${patient.pid}`}>
+                    <FileText className="mr-2 h-4 w-4"/> View Medical History
+                  </Link>
+                </Button>
                 <Button variant="destructive" size="sm">Discharge Patient</Button>
             </div>
            </div>
@@ -167,9 +166,3 @@ export default function PatientDetailPage() {
     </div>
   );
 }
-
-// Helper to get initials if needed, but AvatarFallback does this
-// const getInitials = (name: string) => {
-//   return name.split(' ').map(n => n[0]).join('').toUpperCase();
-// };
-

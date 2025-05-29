@@ -18,28 +18,63 @@ export default function RegisterPage() {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [confirmPassword, setConfirmPassword] = React.useState('');
+  const [isLoading, setIsLoading] = React.useState(false);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setIsLoading(true);
+
     if (password !== confirmPassword) {
       toast({
         variant: 'destructive',
         title: 'Passwords do not match',
         description: 'Please ensure your passwords are the same.',
       });
+      setIsLoading(false);
       return;
     }
-    const registrationData = { name, email, password };
-    console.log('Registration Data:', registrationData);
 
-    // Simulate successful registration for now
-    toast({
-      title: 'Registration Attempted',
-      description: 'Registration data logged to console. Redirecting to dashboard...',
-    });
-    // In a real app, you would handle the actual registration logic here
-    // and redirect upon successful account creation.
-    router.push('/'); // Redirect to home page
+    const registrationData = {
+      username: name, // Mapping form's 'name' to 'username' for the API
+      password: password, // Backend should hash this
+      email: email,
+      role: 'User', // Sending a default role
+    };
+
+    try {
+      const response = await fetch('http://localhost:5223/api/Users/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(registrationData),
+      });
+
+      if (response.ok) {
+        // const responseBody = await response.text(); // API returns "User registered successfully"
+        toast({
+          title: 'Registration Successful',
+          description: "User registered successfully. Please login.",
+        });
+        router.push('/login');
+      } else {
+        const errorData = await response.json().catch(() => ({ message: "Registration failed. Server responded with an error." }));
+        toast({
+          variant: 'destructive',
+          title: 'Registration Failed',
+          description: errorData.message || `Server error: ${response.status}`,
+        });
+      }
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Network Error',
+        description: 'Could not connect to the server. Please try again later.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -55,7 +90,7 @@ export default function RegisterPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name">Full Name (as Username)</Label>
               <Input
                 id="name"
                 type="text"
@@ -63,6 +98,7 @@ export default function RegisterPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -74,6 +110,7 @@ export default function RegisterPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -86,6 +123,7 @@ export default function RegisterPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -97,11 +135,24 @@ export default function RegisterPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
-            <Button type="submit" className="w-full">
-                <UserPlus className="mr-2 h-4 w-4" />
-              Create Account
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Create Account
+                </>
+              )}
             </Button>
           </form>
         </CardContent>

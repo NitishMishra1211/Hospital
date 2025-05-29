@@ -1,9 +1,10 @@
 
 'use client';
 
+import * as React from 'react'; // Added React import
 import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import Link from 'next/link'; // <-- Import Link
+import Link from 'next/link';
 import {
   SidebarProvider,
   Sidebar,
@@ -31,7 +32,7 @@ import {
   Search,
   CalendarDays,
   Megaphone,
-  Briefcase, // Example for "Add Doctor", could be UserPlus as well
+  Briefcase,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -41,7 +42,7 @@ const navItems = [
   { name: 'Patient Details', icon: User, href: '/patient-details' },
   { name: 'Admit Patient', icon: UserPlus, href: '/admit-patient' },
   { name: 'Doctor Details', icon: Users, href: '/doctor-details' },
-  { name: 'Add Doctor', icon: Briefcase, href: '/add-doctor' }, // Added Add Doctor link
+  { name: 'Add Doctor', icon: Briefcase, href: '/add-doctor' },
   { name: 'ER Status', icon: Ambulance, href: '/emergency-status' },
   { name: 'Pharmacy', icon: FlaskConical, href: '/pharmacy-details' },
   { name: 'Search Patients', icon: Search, href: '/search-patients' },
@@ -52,46 +53,56 @@ const navItems = [
   { name: 'Settings', icon: Settings, href: '/settings' },
 ];
 
+interface UserData {
+  username: string;
+  email: string;
+}
+
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const [userData, setUserData] = React.useState<UserData | null>(null);
 
-  // Helper function to determine active state, considering base paths and dynamic routes
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('loggedInUser');
+      if (storedUser) {
+        try {
+          setUserData(JSON.parse(storedUser));
+        } catch (e) {
+          console.error("Failed to parse user data from localStorage", e);
+          localStorage.removeItem('loggedInUser'); // Clear invalid data
+        }
+      }
+    }
+  }, []);
+
+
   const isActive = (href: string) => {
-    // Handle exact match for root '/'
     if (href === '/') {
       return pathname === '/';
     }
-    // Check if the current pathname starts with the href for nested routes
-    // Ensure it's not just a partial match (e.g., '/' matching '/doctors')
     if (href !== '/' && pathname.startsWith(href)) {
-      // Check if the next character after the href part is '/' or end of string
       const nextChar = pathname[href.length];
       return nextChar === '/' || nextChar === undefined;
     }
     return false;
   };
 
-
-  // Find the active nav item for the header title
-  // Prioritize longer matching paths for dynamic routes
    let activeNavItem = null;
    let longestMatchLength = 0;
 
-    // First pass: Exact match or root
     for (const item of navItems) {
         if (pathname === item.href) {
             activeNavItem = item;
             longestMatchLength = item.href.length;
-            break; // Exact match found, prioritize this
+            break; 
         }
     }
 
-    // Second pass: StartsWith match (if no exact match found)
     if (!activeNavItem) {
         for (const item of navItems) {
             if (item.href !== '/' && pathname.startsWith(item.href)) {
                  const nextChar = pathname[item.href.length];
-                 // Ensure it's a true sub-path or exact match start
                  if (nextChar === '/' || nextChar === undefined) {
                     if (item.href.length > longestMatchLength) {
                         activeNavItem = item;
@@ -102,9 +113,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         }
     }
 
-
-  // Use "Home" as default title if no other item is active
   const headerTitle = activeNavItem ? activeNavItem.name : 'Home';
+  const displayName = userData?.username || 'Admin User';
+  const displayEmail = userData?.email || 'admin@medicore.com';
+  const avatarFallback = displayName.split(' ').map(n => n[0]).join('').toUpperCase() || 'AU';
 
 
   return (
@@ -124,7 +136,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <SidebarMenuItem key={item.name}>
                 <SidebarMenuButton
                   href={item.href}
-                  isActive={isActive(item.href)} // Use updated isActive function
+                  isActive={isActive(item.href)}
                 >
                   <item.icon />
                   <span>{item.name}</span>
@@ -137,23 +149,23 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-3 ">
             <Avatar className="h-10 w-10">
               <AvatarImage
-                src="https://picsum.photos/seed/admin/40/40"
-                alt="Admin User"
+                src={userData ? `https://placehold.co/40x40.png?text=${avatarFallback}` : "https://picsum.photos/seed/admin/40/40"}
+                alt={displayName}
                 data-ai-hint="profile avatar"
               />
-              <AvatarFallback>AU</AvatarFallback>
+              <AvatarFallback>{avatarFallback}</AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium text-sidebar-foreground">Admin User</p>
+              <p className="font-medium text-sidebar-foreground">{displayName}</p>
               <p className="text-xs text-sidebar-foreground/70">
-                admin@medicore.com
+                {displayEmail}
               </p>
             </div>
             <Button
               variant="ghost"
               size="icon"
               className="ml-auto text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              asChild // Use asChild to make it a link if needed
+              asChild
             >
               <Link href="/settings">
                 <Settings className="h-5 w-5" />
@@ -166,7 +178,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <header className="flex items-center justify-between p-4 border-b sticky top-0 bg-background/95 backdrop-blur z-10">
           <div className="flex items-center gap-2">
             <SidebarTrigger className="md:hidden" />
-            {/* Display the determined header title */}
             <h1 className="text-2xl font-semibold">
               {headerTitle}
             </h1>
@@ -182,12 +193,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               </Badge>
             </Button>
             <Avatar className="h-9 w-9 hidden md:flex">
-              <AvatarImage
-                src="https://picsum.photos/seed/admin/40/40"
-                alt="Admin User"
+               <AvatarImage
+                src={userData ? `https://placehold.co/40x40.png?text=${avatarFallback}` : "https://picsum.photos/seed/admin/40/40"}
+                alt={displayName}
                 data-ai-hint="profile avatar"
               />
-              <AvatarFallback>AU</AvatarFallback>
+              <AvatarFallback>{avatarFallback}</AvatarFallback>
             </Avatar>
           </div>
         </header>
@@ -196,3 +207,4 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     </SidebarProvider>
   );
 }
+

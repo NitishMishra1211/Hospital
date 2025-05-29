@@ -152,7 +152,11 @@ export default function PatientDetailPage() {
            <div className="border-t pt-6 mt-6">
             <h3 className="text-lg font-semibold text-primary mb-3">Actions</h3>
             <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm"><Edit3 className="mr-2 h-4 w-4"/> Edit Patient Info</Button>
+                <Button variant="outline" size="sm" asChild>
+                    <Link href={`/patient-details/${patient.pid}/edit`}>
+                        <Edit3 className="mr-2 h-4 w-4"/> Edit Patient Info
+                    </Link>
+                </Button>
                 <Button variant="outline" size="sm" asChild>
                   <Link href={`/patient-medical-history/${patient.pid}`}>
                     <FileText className="mr-2 h-4 w-4"/> View Medical History

@@ -29,26 +29,38 @@ interface ApiDoctorDetail {
 
 export default function DoctorDetailPage() {
   const params = useParams();
-  const doctorId = params.id as string;
+
 
   const [doctor, setDoctor] = React.useState<Doctor | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (!doctorId) {
-        console.warn("Doctor ID is not available from params.");
-        setError("Doctor ID is missing in the URL.");
-        setIsLoading(false);
-        return;
+    // Get the id from params. This can be a string, string[], or undefined.
+    const idFromParams = params.id;
+    let currentDoctorId: string | undefined = undefined;
+
+    if (typeof idFromParams === 'string') {
+      currentDoctorId = idFromParams;
+    } else if (Array.isArray(idFromParams) && idFromParams.length > 0 && typeof idFromParams[0] === 'string') {
+      currentDoctorId = idFromParams[0]; // Use the first element if it's an array of strings
+    }
+
+    if (!currentDoctorId || currentDoctorId.trim() === '' || currentDoctorId.toLowerCase() === 'undefined') {
+      console.warn("Doctor ID from params is not a valid string, is empty, or is literally 'undefined'. Value:", currentDoctorId);
+      setError("Doctor ID is missing or invalid in the URL.");
+      setIsLoading(false);
+      // Optionally call notFound() if an 'undefined' string ID means the route itself is bad
+      // notFound(); 
+      return;
     }
 
     async function fetchDoctorDetail() {
       setIsLoading(true);
       setError(null);
-      console.log("Attempting to fetch doctor with ID:", doctorId); // Debugging line
+      console.log("Attempting to fetch doctor with ID:", currentDoctorId); // Debugging line
       try {
-        const response = await fetch(`http://localhost:5223/api/Doctor/${doctorId}`);
+        const response = await fetch(`http://localhost:5223/api/Doctor/${currentDoctorId}`);
         if (response.status === 404) {
           notFound();
           return;
@@ -75,7 +87,7 @@ export default function DoctorDetailPage() {
         console.error("Failed to fetch doctor details:", e);
         let errorMessage = "An unexpected error occurred while fetching doctor data.";
         if (e instanceof TypeError && e.message === "Failed to fetch") {
-            errorMessage = `Cannot connect to the doctor API (http://localhost:5223/api/Doctor/${doctorId}). Please ensure the backend server is running, accessible, and CORS is configured correctly.`;
+            errorMessage = `Cannot connect to the doctor API (http://localhost:5223/api/Doctor/${currentDoctorId}). Please ensure the backend server is running, accessible, and CORS is configured correctly.`;
         } else if (e.message) {
             errorMessage = e.message;
         }
@@ -85,7 +97,7 @@ export default function DoctorDetailPage() {
       }
     }
     fetchDoctorDetail();
-  }, [doctorId]);
+  }, [params.id]); // Keep params.id as dependency
 
   if (isLoading) {
     return (
@@ -137,6 +149,8 @@ export default function DoctorDetailPage() {
     );
   }
 
+  const doctorInitials = doctor.name ? doctor.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'DR';
+
   return (
     <div className="space-y-6 lg:space-y-8">
       <Card className="shadow-lg rounded-lg overflow-hidden">
@@ -144,7 +158,7 @@ export default function DoctorDetailPage() {
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <Avatar className="h-20 w-20 border-4 border-primary">
               <AvatarImage src={doctor.avatarUrl || undefined} alt={doctor.name} data-ai-hint="doctor avatar" />
-              <AvatarFallback className="text-2xl">{doctor.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+              <AvatarFallback className="text-2xl">{doctorInitials}</AvatarFallback>
             </Avatar>
             <div className="text-center sm:text-left">
               <CardTitle className="text-3xl font-bold">{doctor.name}</CardTitle>

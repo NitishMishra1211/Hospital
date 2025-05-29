@@ -30,7 +30,11 @@ export default function DoctorDetailsPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch('http://localhost:5223/api/Doctor'); // Updated API URL
+        const response = await fetch('http://localhost:5223/api/Doctor/', { // Updated API URL with trailing slash
+           headers: {
+            // Add any necessary headers, e.g., 'ngrok-skip-browser-warning': 'true' if using ngrok and needed
+          },
+        });
         if (!response.ok) {
           const errorText = await response.text().catch(() => `HTTP error! status: ${response.status}`);
           console.error("API Error Response Text:", errorText);
@@ -55,14 +59,14 @@ export default function DoctorDetailsPage() {
           email: apiDoc.email,
           phoneNumber: apiDoc.phoneNumber,
           isActive: apiDoc.isActive === undefined ? true : apiDoc.isActive,
-          availableTimeSlots: [],
+          availableTimeSlots: [], // Assuming this isn't part of the list view from API
         }));
         setDoctors(formattedDoctors);
       } catch (e: any) {
         console.error("Failed to fetch doctors:", e);
         let errorMessage = "An unexpected error occurred while fetching doctor data.";
         if (e instanceof TypeError && e.message.toLowerCase().includes("failed to fetch")) {
-            errorMessage = "Network error: Cannot connect to the doctor API at http://localhost:5223/api/Doctor. Please ensure the backend server is running, accessible, and CORS is configured correctly.";
+            errorMessage = "Network error: Cannot connect to the doctor API at http://localhost:5223/api/Doctor/. Please ensure the backend server is running, accessible, and CORS is configured correctly.";
         } else if (e.message) {
             errorMessage = e.message;
         }

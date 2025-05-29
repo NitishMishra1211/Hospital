@@ -8,62 +8,68 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FlaskConical, Search, PlusCircle, Package, ListOrdered } from 'lucide-react';
+import { FlaskConical, Search, PlusCircle, Package, ListOrdered, AlertTriangle, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import type { MedicalRecord } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
+// Mock inventory data remains for the inventory section
 const mockInventory = [
   { id: 'med001', name: 'Paracetamol 500mg', stock: 1500, lowStockThreshold: 200, category: 'Pain Relief' },
   { id: 'med002', name: 'Amoxicillin 250mg', stock: 80, lowStockThreshold: 100, category: 'Antibiotic' },
-  // ... other inventory items
-];
-
-const mockPrescriptions = [
-    { id: 'rx001', patientName: 'Alice Johnson', medication: 'Lisinopril 10mg', status: 'Pending', date: '2024-08-20' },
-    { id: 'rx002', patientName: 'Bob Williams', medication: 'Amoxicillin 250mg', status: 'Ready', date: '2024-08-20' },
-    // ... other prescriptions
+  { id: 'med003', name: 'Lisinopril 10mg', stock: 500, lowStockThreshold: 50, category: 'Antihypertensive' },
+  { id: 'med004', name: 'Metformin 500mg', stock: 300, lowStockThreshold: 75, category: 'Antidiabetic' },
 ];
 
 export default function PharmacyDetailsPage() {
-    const [searchTerm, setSearchTerm] = React.useState('');
+    const [inventorySearchTerm, setInventorySearchTerm] = React.useState('');
     const { toast } = useToast();
 
+    const [medicalRecords, setMedicalRecords] = React.useState<MedicalRecord[]>([]);
+    const [isLoadingRecords, setIsLoadingRecords] = React.useState(true);
+    const [recordsError, setRecordsError] = React.useState<string | null>(null);
+
+    React.useEffect(() => {
+      async function fetchMedicalRecords() {
+        setIsLoadingRecords(true);
+        setRecordsError(null);
+        try {
+          const response = await fetch('http://localhost:5223/api/MedicalRecords', {
+            headers: {
+              'ngrok-skip-browser-warning': 'true',
+            },
+          });
+          if (!response.ok) {
+            const errorText = await response.text().catch(() => `HTTP error! status: ${response.status}`);
+             throw new Error(`Failed to fetch medical records. Status: ${response.status}. Response: ${errorText.substring(0,200)}...`);
+          }
+          const contentType = response.headers.get("content-type");
+          if (!contentType || !contentType.includes("application/json")) {
+            const responseText = await response.text().catch(() => "Could not read response text.");
+            throw new Error(`Expected JSON response for medical records, but got ${contentType || 'unknown'}. Response: ${responseText.substring(0,200)}...`);
+          }
+          const data: MedicalRecord[] = await response.json();
+          setMedicalRecords(data);
+        } catch (e: any) {
+          console.error("Failed to fetch medical records:", e);
+          setRecordsError(e.message || "An unexpected error occurred while fetching medical records.");
+        } finally {
+          setIsLoadingRecords(false);
+        }
+      }
+      fetchMedicalRecords();
+    }, []);
+
+
     const filteredInventory = mockInventory.filter(item =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.category.toLowerCase().includes(searchTerm.toLowerCase())
+        item.name.toLowerCase().includes(inventorySearchTerm.toLowerCase()) ||
+        (item.category && item.category.toLowerCase().includes(inventorySearchTerm.toLowerCase()))
     );
 
     const handleAction = (action: string, details?: any) => {
         console.log("Pharmacy Action:", action, "Details:", details);
-
-        let toastMessage = `Pharmacy Action '${action}' triggered.`;
-        if (details) {
-            toastMessage += ` Details: ${JSON.stringify(details)}`;
-        }
-        
-        switch(action) {
-            case 'New Prescription Entry':
-                // In a real app, open a modal to collect prescription data
-                console.log("Simulating new prescription entry...");
-                toast({ title: "New Prescription", description: "Prescription entry process initiated (logged to console)." });
-                break;
-            case 'Restock Inventory':
-                // In a real app, open a modal for restock details
-                console.log("Simulating inventory restock for item:", details);
-                toast({ title: "Restock Inventory", description: "Inventory restock process initiated (logged to console)." });
-                break;
-            case 'Generate Report':
-                console.log("Simulating generation of pharmacy report...");
-                toast({ title: "Generate Report", description: "Pharmacy report generation initiated (logged to console)." });
-                break;
-            case 'Dispense':
-            case 'Collect':
-                console.log(`Simulating ${action} for prescription:`, details);
-                toast({ title: action, description: `${action} process for prescription ${details.id} initiated (logged to console).`});
-                // Here you might update local state to reflect the change, e.g., mockPrescriptions
-                break;
-            default:
-                toast({ title: `Action: ${action}`, description: toastMessage });
-        }
+        toast({ title: `Action: ${action}`, description: `Details: ${JSON.stringify(details)} (Logged to console)` });
     };
 
   return (
@@ -80,52 +86,82 @@ export default function PharmacyDetailsPage() {
         </CardHeader>
         <CardContent className="p-6 space-y-8">
            <div className="flex flex-wrap gap-2">
-                 <Button onClick={() => handleAction('New Prescription Entry')}>
+                 <Button onClick={() => handleAction('New Manual Prescription Entry')}>
                     <PlusCircle className="mr-2 h-4 w-4"/> New Prescription
                  </Button>
-                 <Button variant="outline" onClick={() => handleAction('Restock Inventory')}>
+                 <Button variant="outline" onClick={() => handleAction('Restock Inventory Process')}>
                     <Package className="mr-2 h-4 w-4"/> Restock Inventory
                  </Button>
-                 <Button variant="outline" onClick={() => handleAction('Generate Report')}>
+                 <Button variant="outline" onClick={() => handleAction('Generate Pharmacy Report')}>
                      <ListOrdered className="mr-2 h-4 w-4"/> Generate Report
                  </Button>
             </div>
 
            <Card>
               <CardHeader>
-                <CardTitle className="text-lg font-semibold">Prescription Queue</CardTitle>
-                <CardDescription>View and manage pending and ready prescriptions.</CardDescription>
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary/80" />
+                    Prescriptions from Medical Records
+                </CardTitle>
+                <CardDescription>View prescriptions derived from patient medical records.</CardDescription>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="h-[200px]">
+                <ScrollArea className="h-[300px]">
                    <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Patient</TableHead>
-                          <TableHead>Medication</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Status</TableHead>
+                          <TableHead>Record ID</TableHead>
+                          <TableHead>Patient ID</TableHead>
+                          <TableHead>Doctor ID</TableHead>
+                          <TableHead>Diagnosis</TableHead>
+                          <TableHead>Prescription</TableHead>
                           <TableHead>Action</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {mockPrescriptions.map((rx) => (
-                          <TableRow key={rx.id}>
-                            <TableCell>{rx.patientName}</TableCell>
-                            <TableCell>{rx.medication}</TableCell>
-                            <TableCell>{rx.date}</TableCell>
-                            <TableCell>
-                              <Badge variant={rx.status === 'Pending' ? 'destructive' : 'secondary'} className={rx.status === 'Ready' ? 'bg-green-500 hover:bg-green-600' : ''}>
-                                {rx.status}
-                              </Badge>
-                            </TableCell>
-                             <TableCell>
-                                <Button variant="link" size="sm" onClick={() => handleAction(rx.status === 'Pending' ? 'Dispense' : 'Collect', rx)}>
-                                    {rx.status === 'Pending' ? 'Dispense' : 'Collect'}
-                                </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {isLoadingRecords ? (
+                            [...Array(5)].map((_, i) => (
+                                <TableRow key={`skel-rx-${i}`}>
+                                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                                    <TableCell><Skeleton className="h-8 w-20" /></TableCell>
+                                </TableRow>
+                            ))
+                        ) : recordsError ? (
+                            <TableRow>
+                                <TableCell colSpan={6}>
+                                    <Alert variant="destructive">
+                                        <AlertTriangle className="h-4 w-4" />
+                                        <AlertTitle>Error Fetching Prescriptions</AlertTitle>
+                                        <AlertDescription>{recordsError}</AlertDescription>
+                                    </Alert>
+                                </TableCell>
+                            </TableRow>
+                        ) : medicalRecords.length > 0 ? (
+                            medicalRecords.map((record) => (
+                            <TableRow key={record.recordID}>
+                                <TableCell><Badge variant="outline">{record.recordID}</Badge></TableCell>
+                                <TableCell>{record.patientID}</TableCell>
+                                <TableCell>{record.doctorID}</TableCell>
+                                <TableCell>{record.diagnosis || 'N/A'}</TableCell>
+                                <TableCell className="font-medium">{record.prescription || 'N/A'}</TableCell>
+                                <TableCell>
+                                    <Button variant="link" size="sm" onClick={() => handleAction('Dispense Prescription', { recordID: record.recordID, prescription: record.prescription })}>
+                                        Dispense
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                            ))
+                        ) : (
+                             <TableRow>
+                                <TableCell colSpan={6} className="h-24 text-center">
+                                No prescriptions found.
+                                </TableCell>
+                            </TableRow>
+                        )}
                       </TableBody>
                     </Table>
                  </ScrollArea>
@@ -140,8 +176,8 @@ export default function PharmacyDetailsPage() {
                     <Input
                         type="search"
                         placeholder="Search inventory (name, category)..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        value={inventorySearchTerm}
+                        onChange={(e) => setInventorySearchTerm(e.target.value)}
                         className="pl-8 w-full md:w-1/2 lg:w-1/3"
                         aria-label="Search pharmacy inventory"
                     />
@@ -168,7 +204,7 @@ export default function PharmacyDetailsPage() {
                               {item.stock <= item.lowStockThreshold ? (
                                 <Badge variant="destructive">Low Stock</Badge>
                               ) : (
-                                <Badge variant="secondary" className="bg-green-100 text-green-800">In Stock</Badge>
+                                <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100/80">In Stock</Badge>
                               )}
                             </TableCell>
                           </TableRow>
@@ -189,4 +225,3 @@ export default function PharmacyDetailsPage() {
     </div>
   );
 }
-    

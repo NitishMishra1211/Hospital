@@ -33,3 +33,13 @@ export type CountryCode = {
   name: string;
   dial_code: string;
 };
+
+export type MedicalRecord = {
+  recordID: string;
+  patientID: string;
+  doctorID: string;
+  appointmentID: string; // Assuming this might be useful context later
+  diagnosis: string;
+  prescription: string;
+  testResults: string; // Assuming this might be useful context later
+};

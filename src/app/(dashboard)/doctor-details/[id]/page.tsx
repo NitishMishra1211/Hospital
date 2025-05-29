@@ -36,13 +36,18 @@ export default function DoctorDetailPage() {
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (!doctorId) return;
+    if (!doctorId) {
+        console.warn("Doctor ID is not available from params.");
+        setError("Doctor ID is missing in the URL.");
+        setIsLoading(false);
+        return;
+    }
 
     async function fetchDoctorDetail() {
       setIsLoading(true);
       setError(null);
+      console.log("Attempting to fetch doctor with ID:", doctorId); // Debugging line
       try {
-        // Assuming your API for a single doctor is /api/Doctor/{id}
         const response = await fetch(`http://localhost:5223/api/Doctor/${doctorId}`);
         if (response.status === 404) {
           notFound();
@@ -54,7 +59,6 @@ export default function DoctorDetailPage() {
         }
         const apiData: ApiDoctorDetail = await response.json();
 
-        // Map API data to the Doctor type
         const formattedDoctor: Doctor = {
           id: apiData.id,
           name: apiData.doctorname,
@@ -119,16 +123,16 @@ export default function DoctorDetailPage() {
           <AlertTitle>Error Fetching Doctor Details</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
+         <Button onClick={() => window.history.back()} variant="outline">Go Back</Button>
       </div>
     );
   }
 
   if (!doctor) {
-    // This case should ideally be handled by notFound() if API returns 404
-    // or by the error state if the fetch failed for other reasons.
     return (
          <div className="space-y-6 lg:space-y-8 text-center">
              <p className="text-muted-foreground">Doctor data not available or an error occurred.</p>
+             <Button onClick={() => window.history.back()} variant="outline">Go Back</Button>
          </div>
     );
   }
@@ -168,7 +172,6 @@ export default function DoctorDetailPage() {
           </div>
         </CardHeader>
         <CardContent className="p-6 space-y-6">
-          {/* Section 1: Schedule/Availability */}
           <div>
             <h3 className="text-lg font-semibold text-primary mb-3 border-b pb-2 flex items-center gap-2">
                 <CalendarClock className="h-5 w-5"/> Availability & Schedule
@@ -186,7 +189,6 @@ export default function DoctorDetailPage() {
             )}
           </div>
 
-           {/* Section 2: Assigned Patients (Placeholder) */}
            <div>
             <h3 className="text-lg font-semibold text-primary mb-3 border-b pb-2 flex items-center gap-2">
                 <Users className="h-5 w-5"/> Assigned Patients
@@ -194,15 +196,8 @@ export default function DoctorDetailPage() {
             <p className="text-muted-foreground text-sm">
                 Patient assignment information would be displayed here if available from the API.
             </p>
-            {/* Example Badges (Remove if not dynamically populated)
-            <div className="mt-2 space-y-1 text-sm">
-                <Badge variant="outline">Alice Johnson (PID: P123)</Badge>
-                <Badge variant="outline">Robert Brown (PID: P456)</Badge>
-            </div>
-            */}
            </div>
 
-          {/* Section 3: Actions (Placeholder) */}
           <div>
             <h3 className="text-lg font-semibold text-primary mb-3 border-b pb-2 pt-4">Actions</h3>
             <div className="flex flex-wrap gap-2">
@@ -221,4 +216,3 @@ export default function DoctorDetailPage() {
     </div>
   );
 }
-

@@ -13,7 +13,7 @@ interface ApiDoctor {
   id: string;
   doctorname: string;
   dept: string;
-  avatarUrl?: string; // Keep these optional as the API might not provide them
+  avatarUrl?: string;
   specialization?: string;
   email?: string;
   phoneNumber?: string;
@@ -30,11 +30,7 @@ export default function DoctorDetailsPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch('https://70e2-47-9-35-133.ngrok-free.app/api/Doctor', {
-          headers: {
-            'ngrok-skip-browser-warning': 'true', // Added header
-          },
-        });
+        const response = await fetch('http://localhost:5223/api/Doctor'); // Updated API URL
         if (!response.ok) {
           const errorText = await response.text().catch(() => `HTTP error! status: ${response.status}`);
           console.error("API Error Response Text:", errorText);
@@ -66,7 +62,7 @@ export default function DoctorDetailsPage() {
         console.error("Failed to fetch doctors:", e);
         let errorMessage = "An unexpected error occurred while fetching doctor data.";
         if (e instanceof TypeError && e.message.toLowerCase().includes("failed to fetch")) {
-            errorMessage = "Network error: Cannot connect to the doctor API. Please ensure the backend server at https://70e2-47-9-35-133.ngrok-free.app is running, accessible, and CORS is configured correctly.";
+            errorMessage = "Network error: Cannot connect to the doctor API at http://localhost:5223/api/Doctor. Please ensure the backend server is running, accessible, and CORS is configured correctly.";
         } else if (e.message) {
             errorMessage = e.message;
         }
